@@ -11,13 +11,13 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<User> Users => Set<User>();
+    public DbSet<User> Users { get; set; }
 
-    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Employee> Employees { get; set; }
 
-    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<LeaveRequest> LeaveRequests { get; set; }
 
-    public DbSet<LeaveBalance> LeaveBalances => Set<LeaveBalance>();
+    public DbSet<LeaveBalance> LeaveBalances { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
