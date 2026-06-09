@@ -1,8 +1,10 @@
 namespace HRConnect.API.DTOs.Auth;
 
-public class LoginResponseDto
+public class RegisterResponseDto
 {
-    public string Token { get; set; } = string.Empty;
+    public int Id { get; set; }
+
+    public string Email { get; set; } = string.Empty;
 
     public string FullName { get; set; } = string.Empty;
 

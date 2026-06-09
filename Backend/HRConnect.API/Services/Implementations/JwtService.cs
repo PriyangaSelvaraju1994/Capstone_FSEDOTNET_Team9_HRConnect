@@ -12,11 +12,15 @@ public class JwtService : IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(string email)
+    public string GenerateToken(int userId, string email, bool isAdmin)
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.Email, email)
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Role, isAdmin ? "Admin" : "User"),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var key = new SymmetricSecurityKey(

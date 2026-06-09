@@ -1,4 +1,4 @@
 public interface IJwtService
 {
-    string GenerateToken(string email);
+    string GenerateToken(int userId, string email, bool isAdmin);
 }
