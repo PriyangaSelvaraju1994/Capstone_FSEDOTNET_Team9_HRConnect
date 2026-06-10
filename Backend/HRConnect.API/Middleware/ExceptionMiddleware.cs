@@ -1,6 +1,5 @@
-using System.Text.Json;
-using HRConnect.API.Exceptions;
 using HRConnect.API.Entities;
+using HRConnect.API.Exceptions;
 
 namespace HRConnect.API.Middleware;
 
@@ -32,6 +31,8 @@ public class ExceptionMiddleware
         var statusCode = exception switch
         {
             NotFoundException => StatusCodes.Status404NotFound,
+            BadRequestException => StatusCodes.Status400BadRequest,
+            ConflictException => StatusCodes.Status409Conflict,
             ValidationException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
