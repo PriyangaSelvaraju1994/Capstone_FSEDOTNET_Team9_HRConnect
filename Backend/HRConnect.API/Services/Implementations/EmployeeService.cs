@@ -2,17 +2,21 @@ using HRConnect.API.Data;
 using HRConnect.API.DTOs.Employee;
 using HRConnect.API.Entities;
 using HRConnect.API.Exceptions;
+using HRConnect.API.Helpers;
 using HRConnect.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace HRConnect.API.Services.Implementations;
 
 public class EmployeeService : IEmployeeService
 {
     private readonly ApplicationDbContext _context;
+    private readonly DefaultLeaveBalancesForNewEmployee _leaveBalanceHelper;
 
-    public EmployeeService(ApplicationDbContext context)
+    public EmployeeService(ApplicationDbContext context, DefaultLeaveBalancesForNewEmployee leaveBalanceHelper)
     {
         _context = context;
+        _leaveBalanceHelper = leaveBalanceHelper;
     }
 
     public async Task<IEnumerable<EmployeeDto>> GetAllEmployeesAsync()
@@ -38,7 +42,7 @@ public class EmployeeService : IEmployeeService
         {
             throw new BadRequestException("Employee ID is invalid.");
         }
-        //Fetchinh the employee from the database
+        //Fetching the employee from the database
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (employee == null)
         {
@@ -73,6 +77,7 @@ public class EmployeeService : IEmployeeService
         {
             throw new ConflictException($"An employee record already exists for User ID {request.UserId}.");
         }
+
         var employee = new Employee
         {
             UserId = request.UserId,
@@ -82,6 +87,10 @@ public class EmployeeService : IEmployeeService
         };
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
+
+        // Creating default leave balances using helper
+        await _leaveBalanceHelper.CreateDefaultLeaveBalancesAsync(employee.Id);
+
         return new EmployeeDto
         {
             Id = employee.Id,
@@ -91,6 +100,7 @@ public class EmployeeService : IEmployeeService
             JoiningDate = employee.JoiningDate
         };
     }
+
     public async Task<EmployeeDto> UpdateEmployeeAsync(int id, UpdateEmployeeDto request)
     {   //Checking if EmployeeID is valid
         if (id <= 0)
@@ -136,13 +146,24 @@ public class EmployeeService : IEmployeeService
         {
             throw new BadRequestException("Employee ID must be greater than 0.");
         }
-        //Fetching the employee from the database
-        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+
+        //Fetching the employee from the database with related leave data
+        var employee = await _context.Employees
+            .Include(e => e.LeaveRequests)
+            .Include(e => e.LeaveBalances)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (employee == null)
         {
             throw new NotFoundException($"Employee with ID {id} not found.");
         }
+
+        // Delete related leave requests and balances first
+        _context.LeaveRequests.RemoveRange(employee.LeaveRequests);
+        _context.LeaveBalances.RemoveRange(employee.LeaveBalances);
+        // Delete the employee
         _context.Employees.Remove(employee);
+
         await _context.SaveChangesAsync();
     }
 }
