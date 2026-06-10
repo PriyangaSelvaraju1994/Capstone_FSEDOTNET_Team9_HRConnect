@@ -1,8 +1,8 @@
-using HRConnect.API.DTOs.Employee;
-using HRConnect.API.Services.Interfaces;
 using HRConnect.API.Data;
+using HRConnect.API.DTOs.Employee;
 using HRConnect.API.Entities;
-using Microsoft.EntityFrameworkCore;
+using HRConnect.API.Exceptions;
+using HRConnect.API.Services.Interfaces;
 
 namespace HRConnect.API.Services.Implementations;
 
@@ -14,9 +14,12 @@ public class EmployeeService : IEmployeeService
     {
         _context = context;
     }
+
     public async Task<IEnumerable<EmployeeDto>> GetAllEmployeesAsync()
     {
+        //Fetching all employees from the database and ordering them by JoiningDate in descending order
         return await _context.Employees
+            .OrderByDescending(e => e.JoiningDate)
             .Select(e => new EmployeeDto
             {
                 Id = e.Id,
@@ -28,14 +31,19 @@ public class EmployeeService : IEmployeeService
             .ToListAsync();
     }
 
-    public async Task<EmployeeDto?> GetEmployeeByIdAsync(int id)
+    public async Task<EmployeeDto> GetEmployeeByIdAsync(int id)
     {
-        var employee = await _context.Employees
-            .FirstOrDefaultAsync(e => e.Id == id);
-
+        //Checking if Employee ID is valid
+        if (id <= 0)
+        {
+            throw new BadRequestException("Employee ID is invalid.");
+        }
+        //Fetchinh the employee from the database
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (employee == null)
-            return null;
-
+        {
+            throw new NotFoundException($"Employee with ID {id} not found.");
+        }
         return new EmployeeDto
         {
             Id = employee.Id,
@@ -48,18 +56,32 @@ public class EmployeeService : IEmployeeService
 
     public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeDto request)
     {
+        //Checking if UserID is valid
+        if (request.UserId <= 0)
+        {
+            throw new BadRequestException("UserId must be greater than 0.");
+        }
+        //Checking if Userid exists in Users table
+        var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+        if (!userExists)
+        {
+            throw new NotFoundException($"User with ID {request.UserId} does not exist.");
+        }
+        //Checking if employee already exists for this user
+        var employeeExists = await _context.Employees.AnyAsync(e => e.UserId == request.UserId);
+        if (employeeExists)
+        {
+            throw new ConflictException($"An employee record already exists for User ID {request.UserId}.");
+        }
         var employee = new Employee
         {
             UserId = request.UserId,
-            Department = request.Department,
-            Designation = request.Designation,
+            Department = request.Department.Trim(),
+            Designation = request.Designation.Trim(),
             JoiningDate = request.JoiningDate
         };
-
         _context.Employees.Add(employee);
-
         await _context.SaveChangesAsync();
-
         return new EmployeeDto
         {
             Id = employee.Id,
@@ -69,23 +91,34 @@ public class EmployeeService : IEmployeeService
             JoiningDate = employee.JoiningDate
         };
     }
-
-    public async Task<EmployeeDto?> UpdateEmployeeAsync(
-            int id,
-            UpdateEmployeeDto request)
-    {
-        var employee = await _context.Employees
-            .FirstOrDefaultAsync(e => e.Id == id);
-
+    public async Task<EmployeeDto> UpdateEmployeeAsync(int id, UpdateEmployeeDto request)
+    {   //Checking if EmployeeID is valid
+        if (id <= 0)
+        {
+            throw new BadRequestException("Employee ID must be greater than 0.");
+        }
+        //Checking if Department is empty
+        if (string.IsNullOrWhiteSpace(request.Department))
+        {
+            throw new BadRequestException("Department is required.");
+        }
+        //Checking if Designation is empty
+        if (string.IsNullOrWhiteSpace(request.Designation))
+        {
+            throw new BadRequestException("Designation is required.");
+        }
+        //Fetching the employee from the database
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (employee == null)
-            return null;
+        {
+            throw new NotFoundException($"Employee with ID {id} not found.");
+        }
 
-        employee.Department = request.Department;
-        employee.Designation = request.Designation;
+        employee.Department = request.Department.Trim();
+        employee.Designation = request.Designation.Trim();
         employee.JoiningDate = request.JoiningDate;
 
         await _context.SaveChangesAsync();
-
         return new EmployeeDto
         {
             Id = employee.Id,
@@ -96,18 +129,20 @@ public class EmployeeService : IEmployeeService
         };
     }
 
-    public async Task<bool> DeleteEmployeeAsync(int id)
+    public async Task DeleteEmployeeAsync(int id)
     {
-        var employee = await _context.Employees
-            .FirstOrDefaultAsync(e => e.Id == id);
-
+        // Checking if Employee ID is valid
+        if (id <= 0)
+        {
+            throw new BadRequestException("Employee ID must be greater than 0.");
+        }
+        //Fetching the employee from the database
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (employee == null)
-            return false;
-
+        {
+            throw new NotFoundException($"Employee with ID {id} not found.");
+        }
         _context.Employees.Remove(employee);
-
         await _context.SaveChangesAsync();
-
-        return true;
     }
 }
