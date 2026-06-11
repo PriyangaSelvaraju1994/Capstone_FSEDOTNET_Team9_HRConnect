@@ -1,5 +1,6 @@
 using HRConnect.API.Entities;
 using HRConnect.API.Exceptions;
+using System.Text.Json;
 
 namespace HRConnect.API.Middleware;
 
