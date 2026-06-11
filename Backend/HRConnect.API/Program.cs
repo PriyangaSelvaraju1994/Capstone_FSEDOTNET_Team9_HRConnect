@@ -48,11 +48,26 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateLeaveRequestValidator>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
