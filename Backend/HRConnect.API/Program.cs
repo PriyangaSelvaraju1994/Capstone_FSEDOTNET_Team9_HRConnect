@@ -56,7 +56,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:5173",
-                "https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net"
+                "https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net",
+                "https://polite-grass-0ed920b00.7.azurestaticapps.net/"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();

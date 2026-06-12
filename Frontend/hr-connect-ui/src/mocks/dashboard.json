@@ -1,0 +1,154 @@
+{
+  "default": {
+    "balances": [
+      { "type": "Annual", "used": 6, "total": 18 },
+      { "type": "Sick", "used": 2, "total": 10 },
+      { "type": "Personal", "used": 2, "total": 5 },
+      { "type": "CompOff", "used": 1, "total": 2 }
+    ],
+    "recentRequests": []
+  },
+  "employees": {
+    "u-001": {
+      "balances": [
+        { "type": "Annual", "used": 12, "total": 18 },
+        { "type": "Sick", "used": 8, "total": 10 },
+        { "type": "Personal", "used": 3, "total": 5 },
+        { "type": "CompOff", "used": 1, "total": 2 }
+      ],
+      "recentRequests": [
+        {
+          "id": "lr-1001",
+          "employeeId": "u-001",
+          "employeeName": "Rino Rexy",
+          "employeeInitials": "RR",
+          "type": "Annual",
+          "days": 3,
+          "startDate": "2026-06-12",
+          "endDate": "2026-06-14",
+          "status": "Pending",
+          "submittedAt": "2026-06-07T09:15:00Z"
+        },
+        {
+          "id": "lr-1002",
+          "employeeId": "u-001",
+          "employeeName": "Rino Rexy",
+          "employeeInitials": "RR",
+          "type": "Sick",
+          "days": 1,
+          "startDate": "2026-05-28",
+          "endDate": "2026-05-28",
+          "status": "Approved",
+          "submittedAt": "2026-05-27T07:40:00Z"
+        },
+        {
+          "id": "lr-1003",
+          "employeeId": "u-001",
+          "employeeName": "Rino Rexy",
+          "employeeInitials": "RR",
+          "type": "Personal",
+          "days": 2,
+          "startDate": "2026-05-06",
+          "endDate": "2026-05-07",
+          "status": "Rejected",
+          "submittedAt": "2026-04-30T16:05:00Z"
+        }
+      ]
+    },
+    "u-002": {
+      "balances": [
+        { "type": "Annual", "used": 4, "total": 18 },
+        { "type": "Sick", "used": 1, "total": 10 },
+        { "type": "Personal", "used": 0, "total": 5 },
+        { "type": "CompOff", "used": 0, "total": 2 }
+      ],
+      "recentRequests": [
+        {
+          "id": "lr-2001",
+          "employeeId": "u-002",
+          "employeeName": "Marcus Okafor",
+          "employeeInitials": "MO",
+          "type": "Annual",
+          "days": 2,
+          "startDate": "2026-04-20",
+          "endDate": "2026-04-21",
+          "status": "Approved",
+          "submittedAt": "2026-04-10T11:00:00Z"
+        }
+      ]
+    }
+  },
+  "hr": {
+    "kpis": {
+      "pendingCount": 7,
+      "approvedThisMonth": 23,
+      "activeEmployees": 142,
+      "onLeaveToday": 12
+    },
+    "recentActivity": [
+      {
+        "id": "act-001",
+        "actorId": "u-101",
+        "actorName": "Rahul K.",
+        "actorInitials": "RK",
+        "action": "requested",
+        "leaveType": "Annual",
+        "days": 2,
+        "startDate": "2026-06-15",
+        "endDate": "2026-06-16",
+        "occurredAt": "2026-06-08T08:35:00Z",
+        "status": "Pending"
+      },
+      {
+        "id": "act-002",
+        "actorId": "u-102",
+        "actorName": "Anita N.",
+        "actorInitials": "AN",
+        "action": "requested",
+        "leaveType": "Sick",
+        "days": 1,
+        "startDate": "2026-06-09",
+        "endDate": "2026-06-09",
+        "occurredAt": "2026-06-08T08:13:00Z",
+        "status": "Pending"
+      },
+      {
+        "id": "act-003",
+        "actorId": "u-001",
+        "actorName": "Rino R.",
+        "actorInitials": "RR",
+        "action": "approved",
+        "leaveType": "Personal",
+        "days": 2,
+        "occurredAt": "2026-06-08T07:45:00Z",
+        "status": "Approved",
+        "byMe": true
+      },
+      {
+        "id": "act-004",
+        "actorId": "u-103",
+        "actorName": "Priya S.",
+        "actorInitials": "PS",
+        "action": "requested",
+        "leaveType": "CompOff",
+        "days": 1,
+        "startDate": "2026-06-19",
+        "endDate": "2026-06-19",
+        "occurredAt": "2026-06-08T07:20:00Z",
+        "status": "Pending"
+      },
+      {
+        "id": "act-005",
+        "actorId": "u-104",
+        "actorName": "Sam T.",
+        "actorInitials": "ST",
+        "action": "rejected",
+        "leaveType": "Annual",
+        "days": 5,
+        "occurredAt": "2026-06-07T16:10:00Z",
+        "status": "Rejected",
+        "byMe": true
+      }
+    ]
+  }
+}

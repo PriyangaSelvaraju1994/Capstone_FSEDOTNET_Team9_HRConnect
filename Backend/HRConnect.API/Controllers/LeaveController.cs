@@ -16,6 +16,7 @@ public class LeaveController : ControllerBase
         _leaveService = leaveService;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> ApplyLeave(
         CreateLeaveRequestDto request)
@@ -27,17 +28,18 @@ public class LeaveController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("mine")]
     public async Task<IActionResult> GetMyLeaves(
         int employeeId)
     {
-        employeeId = 2; // For testing, replace with actual employee ID from auth context
         var leaves =
             await _leaveService.GetMyLeavesAsync(employeeId);
 
         return Ok(leaves);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateStatus(
         int id,
@@ -51,6 +53,7 @@ public class LeaveController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("leavebalances/{employeeId}")]
     public async Task<IActionResult> GetLeaveBalance(
         int employeeId)
@@ -59,5 +62,14 @@ public class LeaveController : ControllerBase
             await _leaveService.GetLeaveBalanceAsync(employeeId);
 
         return Ok(balance);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllLeaves()
+    {
+        var leaves = await _leaveService.GetAllLeavesAsync();
+
+        return Ok(leaves);
     }
 }

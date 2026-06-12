@@ -12,4 +12,6 @@ public interface ILeaveService
         UpdateLeaveStatusDto request);
 
     Task<List<LeaveBalanceDto>> GetLeaveBalanceAsync(int employeeId);
+
+    Task<List<LeaveRequestDto>> GetAllLeavesAsync();
 }
