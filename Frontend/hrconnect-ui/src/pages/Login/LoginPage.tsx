@@ -184,11 +184,6 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-          <div className="text-xs text-slate-500 text-center mt-4">
-            Try <code className="font-mono">rino@company.com</code> /{' '}
-            <code className="font-mono">Password123</code>
-          </div>
         </div>
       </main>
     </div>
