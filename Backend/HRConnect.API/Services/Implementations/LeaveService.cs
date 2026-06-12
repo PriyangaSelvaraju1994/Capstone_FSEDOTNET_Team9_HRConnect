@@ -174,6 +174,31 @@ public class LeaveService : ILeaveService
         return balances;
     }
 
+    public async Task<List<LeaveRequestDto>> GetAllLeavesAsync()
+    {
+        var leaves = await _context.LeaveRequests
+    .Include(l => l.Employee)
+    .ThenInclude(e => e.User)
+    .ToListAsync();
+        var result = leaves.Select(l => new LeaveRequestDto
+{
+    Id = l.Id,
+    EmployeeId = l.EmployeeId,
+    EmployeeName = l.Employee.User.FullName,
+    LeaveType = l.LeaveType.ToString(),
+    StartDate = l.StartDate,
+    EndDate = l.EndDate,
+    Status = l.Status.ToString(),
+    Reason = l.Reason
+}).ToList();
+
+//sort by status pending first, then by start date descending
+        result = result.OrderBy(l => l.Status)
+             .ThenByDescending(l => l.StartDate)
+             .ToList();
+        return result;
+    }
+
     private int CalculateLeaveDays(DateTime startDate, DateTime endDate)
     {
         int days = 0;
