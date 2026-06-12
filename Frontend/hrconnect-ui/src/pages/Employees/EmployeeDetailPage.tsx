@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { Briefcase, Building, Loader2, Mail, Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
 import { Breadcrumb } from '../../components/Breadcrumb';
@@ -9,22 +9,7 @@ import { SectionCard } from '../../components/SectionCard';
 import { SectionHeading } from '../../components/SectionHeading';
 import { StatusBadge } from '../../components/StatusBadge';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  deleteEmployee,
-  fetchEmployeeById,
-  selectEmployeeById,
-  selectEmployeeByIdStatus,
-  selectEmployeeIsNotFound,
-} from '../../store/slices/employeesSlice';
-import {
-  fetchBalances,
-  fetchEmployeeHistory,
-  fetchPendingCount,
-  selectBalancesFor,
-  selectEmployeeHistory,
-  selectPendingCount,
-} from '../../store/slices/leavesSlice';
+import { useEmployeeDetail } from '../../hooks/useEmployeeDetail';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { formatDate, formatDateRange } from '../../utils/formatDate';
@@ -34,60 +19,24 @@ const HISTORY_PAGE_SIZE = 10;
 
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [deleting, setDeleting] = useState(false);
 
-  const dispatch = useAppDispatch();
-  const emp = useAppSelector(selectEmployeeById(id));
-  const byIdStatus = useAppSelector(selectEmployeeByIdStatus);
-  const isNotFound = useAppSelector(selectEmployeeIsNotFound(id));
-  const balances = useAppSelector(selectBalancesFor(id ?? ''));
-  const history = useAppSelector(selectEmployeeHistory);
-  const pendingCount = useAppSelector(selectPendingCount);
-
-  const empLoading =
-    byIdStatus.status === 'loading' && byIdStatus.fetchingId === id;
-  const empError =
-    byIdStatus.status === 'failed' && !isNotFound ? byIdStatus.error : null;
-  const balancesLoading = !balances;
-  const historyLoading =
-    history.status === 'loading' && history.forEmployeeId === id;
-  const historyMatchesEmployee = history.forEmployeeId === id;
-
-  // Kick off all three reads + the badge whenever the route param changes.
-  useEffect(() => {
-    if (!id) return;
-    void dispatch(fetchEmployeeById(id));
-    void dispatch(fetchBalances(id));
-    void dispatch(
-      fetchEmployeeHistory({ employeeId: id, pageSize: HISTORY_PAGE_SIZE }),
-    );
-    void dispatch(fetchPendingCount());
-  }, [dispatch, id]);
-
-  function refetch() {
-    if (id) void dispatch(fetchEmployeeById(id));
-  }
+  const {
+    employee: emp,
+    empLoading,
+    empError,
+    isNotFound,
+    deleting,
+    balances,
+    balancesLoading,
+    history,
+    historyLoading,
+    pendingCount,
+    refetch,
+    handleDelete,
+  } = useEmployeeDetail({ employeeId: id, historyPageSize: HISTORY_PAGE_SIZE });
 
   if (!id) return <Navigate to="/employees" replace />;
   if (isNotFound) return <Navigate to="/404" replace />;
-
-  async function handleDelete() {
-    if (!emp) return;
-    const ok = window.confirm(
-      `Delete ${emp.firstName} ${emp.lastName}? This cannot be undone.`,
-    );
-    if (!ok) return;
-    setDeleting(true);
-    try {
-      await dispatch(deleteEmployee(emp.id)).unwrap();
-      navigate('/employees');
-    } catch {
-      // Error already surfaced through the slice mutation state.
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   return (
     <AppShell pendingCount={pendingCount ?? undefined}>
@@ -242,7 +191,7 @@ export default function EmployeeDetailPage() {
                   </li>
                 ))}
               </ul>
-            ) : !historyMatchesEmployee || history.items.length === 0 ? (
+            ) : history.length === 0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
                 No leave history yet.
               </div>
@@ -261,7 +210,7 @@ export default function EmployeeDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {history.items.map((req) => {
+                  {history.map((req) => {
                     const meta = getLeaveTypeMeta(req.type);
                     const Icon = meta.Icon;
                     return (

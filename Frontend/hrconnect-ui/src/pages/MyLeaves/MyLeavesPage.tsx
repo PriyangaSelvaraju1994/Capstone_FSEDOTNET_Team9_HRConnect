@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, Plus, XCircle } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
@@ -10,79 +9,30 @@ import { Pagination } from '../../components/Pagination';
 import { StatusBadge } from '../../components/StatusBadge';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  cancelLeave,
-  fetchMyLeaves,
-  selectLeaveMutation,
-  selectMyLeaves,
-} from '../../store/slices/leavesSlice';
-import {
-  LEAVE_STATUS_FILTERS,
-  type LeaveRequest,
-  type LeaveStatusFilter,
-} from '../../types/leave';
+import { useMyLeaves } from '../../hooks/useMyLeaves';
+import { LEAVE_STATUS_FILTERS } from '../../types/leave';
 import { range } from '../../utils/array';
 import { formatDate, formatDateRange } from '../../utils/formatDate';
-
-const PAGE_SIZE = 8;
 
 export default function MyLeavesPage() {
   const { user } = useAuth();
   const userId = user?.id ?? '';
-  const [status, setStatus] = useState<LeaveStatusFilter>('All');
-  const [page, setPage] = useState(1);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const dispatch = useAppDispatch();
-  const myLeaves = useAppSelector(selectMyLeaves);
-  const mutation = useAppSelector(selectLeaveMutation);
-  const loading = myLeaves.status === 'loading';
-  const error = myLeaves.status === 'failed' ? myLeaves.error : null;
-
-  // Fetch whenever the filter/page/user changes.
-  useEffect(() => {
-    if (!userId) return;
-    void dispatch(
-      fetchMyLeaves({
-        employeeId: userId,
-        status,
-        page,
-        pageSize: PAGE_SIZE,
-      }),
-    );
-  }, [dispatch, userId, status, page]);
-
-  function refetch() {
-    void dispatch(
-      fetchMyLeaves({
-        employeeId: userId,
-        status,
-        page,
-        pageSize: PAGE_SIZE,
-      }),
-    );
-  }
-
-  function changeStatus(next: LeaveStatusFilter) {
-    setStatus(next);
-    setPage(1);
-  }
-
-  async function handleCancel(req: LeaveRequest) {
-    if (req.status !== 'Pending') return;
-    const ok = window.confirm('Cancel this leave request?');
-    if (!ok) return;
-    setCancellingId(req.id);
-    try {
-      await dispatch(cancelLeave(req.id)).unwrap();
-      refetch();
-    } catch {
-      // Surfaced via mutation.error banner below.
-    } finally {
-      setCancellingId(null);
-    }
-  }
+  const {
+    leaves,
+    totalCount,
+    loading,
+    error,
+    mutation,
+    cancellingId,
+    status,
+    changeStatus,
+    page,
+    pageSize,
+    setPage,
+    refetch,
+    handleCancel,
+  } = useMyLeaves({ userId });
 
   return (
     <AppShell>
@@ -130,7 +80,7 @@ export default function MyLeavesPage() {
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         {loading ? (
           <SkeletonTable />
-        ) : myLeaves.items.length === 0 ? (
+        ) : leaves.length === 0 ? (
           <div className="p-2">
             <EmptyState
               Icon={CalendarDays}
@@ -167,7 +117,7 @@ export default function MyLeavesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {myLeaves.items.map((req) => {
+                {leaves.map((req) => {
                   const meta = getLeaveTypeMeta(req.type);
                   const TypeIcon = meta.Icon;
                   return (
@@ -215,9 +165,9 @@ export default function MyLeavesPage() {
               </tbody>
             </table>
             <Pagination
-              page={myLeaves.page}
-              total={myLeaves.total}
-              pageSize={myLeaves.pageSize}
+              page={page}
+              total={totalCount}
+              pageSize={pageSize}
               onPageChange={setPage}
               itemLabel="requests"
             />

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarDays, Plus, Sun, User as UserIcon } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
@@ -17,31 +16,14 @@ import { QuickActionTile } from '../../components/QuickActionTile';
 import { SectionCard } from '../../components/SectionCard';
 import { SectionHeading } from '../../components/SectionHeading';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  fetchEmployeeDashboard,
-  selectEmployeeDashboard,
-} from '../../store/slices/dashboardSlice';
+import { useEmployeeDashboard } from '../../hooks/useEmployeeDashboard';
 import { range } from '../../utils/array';
 import { getGreeting } from '../../utils/user';
 
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
   const userId = user?.id ?? '';
-
-  const dispatch = useAppDispatch();
-  const slot = useAppSelector(selectEmployeeDashboard);
-  const data = slot.data;
-  const loading = slot.status === 'loading' && !data;
-  const error = slot.status === 'failed' ? slot.error : null;
-
-  useEffect(() => {
-    if (userId) void dispatch(fetchEmployeeDashboard(userId));
-  }, [dispatch, userId]);
-
-  function refetch() {
-    if (userId) void dispatch(fetchEmployeeDashboard(userId));
-  }
+  const { data, loading, error, refetch } = useEmployeeDashboard({ userId });
 
   return (
     <AppShell>

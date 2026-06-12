@@ -143,7 +143,6 @@ export default function RegisterPage() {
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                       errors.lastName ? 'border-rose-400' : 'border-slate-300'
                     }`}
-                    placeholder="Rexy"
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -167,7 +166,6 @@ export default function RegisterPage() {
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                     errors.email ? 'border-rose-400' : 'border-slate-300'
                   }`}
-                  placeholder="you@company.com"
                   {...register('email')}
                 />
                 {errors.email && (
