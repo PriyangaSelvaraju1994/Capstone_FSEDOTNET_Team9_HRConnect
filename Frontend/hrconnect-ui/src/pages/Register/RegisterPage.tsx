@@ -123,7 +123,6 @@ export default function RegisterPage() {
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                       errors.firstName ? 'border-rose-400' : 'border-slate-300'
                     }`}
-                    placeholder="Rino"
                     {...register('firstName')}
                   />
                   {errors.firstName && (

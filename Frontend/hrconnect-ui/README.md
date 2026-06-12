@@ -18,8 +18,8 @@ Seeded in [src/mocks/users.json](src/mocks/users.json):
 
 | Email | Password | Role |
 |-------|----------|------|
-| `rino@company.com` | `Password123` | Employee |
-| `marcus@company.com` | `Password123` | HR Admin |
+| `employee@company.com` | `Password123` | Employee |
+| `admin@company.com` | `Password123` | HR Admin |
 
 You can also register a new account — it's appended to in-memory state and lasts until full page reload.
 
