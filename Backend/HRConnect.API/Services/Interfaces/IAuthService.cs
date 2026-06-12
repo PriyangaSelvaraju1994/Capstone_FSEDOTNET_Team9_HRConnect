@@ -11,5 +11,11 @@ public interface IAuthService
 
     Task<User?> ValidateUserAsync(string email, string password);
 
+    Task<AuthenticationResult> AuthenticateAsync(string email, string password);
+
+    Task<bool> IsAccountLockedAsync(string email);
+
+    Task<bool> IsAccountExpiredAsync(string email);
+
     Task<User> RegisterUserAsync(RegisterRequestDto request);
 }

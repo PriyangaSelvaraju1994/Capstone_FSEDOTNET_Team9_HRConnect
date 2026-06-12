@@ -34,6 +34,16 @@ public class AuthService : IAuthService
             .AnyAsync(u => u.Email == normalizedEmail);
     }
 
+    private static readonly Dictionary<string, int> _failedLoginAttempts =
+        new(StringComparer.InvariantCultureIgnoreCase);
+    private static readonly HashSet<string> _lockedAccounts =
+        new(StringComparer.InvariantCultureIgnoreCase);
+    private static readonly HashSet<string> _expiredAccounts =
+        new(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "expired@example.com"
+        };
+
     public async Task<User?> ValidateUserAsync(string email, string password)
     {
         var user = await GetUserByEmailAsync(email);
@@ -43,6 +53,88 @@ public class AuthService : IAuthService
         return VerifyPassword(user.PasswordHash, password)
             ? user
             : null;
+    }
+
+    public async Task<AuthenticationResult> AuthenticateAsync(string email, string password)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            return new AuthenticationResult
+            {
+                Success = false,
+                Error = "Fields required"
+            };
+        }
+
+        var normalizedEmail = NormalizeEmail(email);
+        var user = await GetUserByEmailAsync(normalizedEmail);
+
+        if (user == null)
+        {
+            return new AuthenticationResult
+            {
+                Success = false,
+                Error = "Invalid email or password."
+            };
+        }
+
+        if (_lockedAccounts.Contains(normalizedEmail))
+        {
+            return new AuthenticationResult
+            {
+                Success = false,
+                IsLockedOut = true,
+                Error = "Account locked temporarily"
+            };
+        }
+
+        if (_expiredAccounts.Contains(normalizedEmail))
+        {
+            return new AuthenticationResult
+            {
+                Success = false,
+                IsExpired = true,
+                Error = "Account expired"
+            };
+        }
+
+        if (!VerifyPassword(user.PasswordHash, password))
+        {
+            _failedLoginAttempts.TryGetValue(normalizedEmail, out var attempts);
+            attempts++;
+            _failedLoginAttempts[normalizedEmail] = attempts;
+
+            if (attempts >= 3)
+            {
+                _lockedAccounts.Add(normalizedEmail);
+            }
+
+            return new AuthenticationResult
+            {
+                Success = false,
+                Error = attempts >= 3 ? "Account locked temporarily" : "Invalid email or password."
+            };
+        }
+
+        _failedLoginAttempts.Remove(normalizedEmail);
+
+        return new AuthenticationResult
+        {
+            Success = true,
+            User = user
+        };
+    }
+
+    public async Task<bool> IsAccountLockedAsync(string email)
+    {
+        var normalizedEmail = NormalizeEmail(email);
+        return await Task.FromResult(_lockedAccounts.Contains(normalizedEmail));
+    }
+
+    public async Task<bool> IsAccountExpiredAsync(string email)
+    {
+        var normalizedEmail = NormalizeEmail(email);
+        return await Task.FromResult(_expiredAccounts.Contains(normalizedEmail));
     }
 
     public async Task<User> RegisterUserAsync(RegisterRequestDto request)
