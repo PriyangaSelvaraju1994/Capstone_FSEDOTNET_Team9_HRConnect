@@ -11,5 +11,5 @@ public class RegisterResponseWrapperDto
     public string? ErrorMessage { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public RegisterResponseDto? RegisterResponse { get; set; }
+    public RegisterResponseDto? ResultSet { get; set; }
 }

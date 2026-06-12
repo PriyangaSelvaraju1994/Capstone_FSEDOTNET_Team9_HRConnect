@@ -11,5 +11,5 @@ public class LoginResponseWrapperDto
     public string? ErrorMessage { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public LoginResponseDto? LoginResponse { get; set; }
+    public LoginResponseDto? ResultSet { get; set; }
 }

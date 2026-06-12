@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
         {
             HttpResponseCode = 200,
             ResultStatus = "success",
-            RegisterResponse = new RegisterResponseDto
+            ResultSet = new RegisterResponseDto
             {
                 Id = user.Id,
                 Email = user.Email,
@@ -85,7 +85,7 @@ public class AuthController : ControllerBase
         {
             HttpResponseCode = 200,
             ResultStatus = "success",
-            LoginResponse = new LoginResponseDto
+            ResultSet = new LoginResponseDto
             {
                 Name = result.User.FullName,
                 UserId = result.User.Id,
@@ -114,7 +114,7 @@ public class AuthController : ControllerBase
         {
             HttpResponseCode = 200,
             ResultStatus = "success",
-            LogoutResponse = new LogoutResponseDto
+            ResultSet = new LogoutResponseDto
             {
                 Message = "User logged out successfully. Token has been revoked on the server.",
                 UserId = userId,
