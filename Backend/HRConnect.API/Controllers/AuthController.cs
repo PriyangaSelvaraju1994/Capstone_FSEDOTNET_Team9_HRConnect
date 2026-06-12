@@ -79,7 +79,7 @@ public class AuthController : ControllerBase
             return Unauthorized(err);
         }
 
-        var token = _jwtService.GenerateToken(result.User!.Id, result.User.Email, result.User.IsAdmin);
+        var token = _jwtService.GenerateToken(result.User!);
 
         var loginWrapper = new LoginResponseWrapperDto
         {

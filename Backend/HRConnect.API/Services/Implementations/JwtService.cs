@@ -1,3 +1,4 @@
+using HRConnect.API.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,14 +13,15 @@ public class JwtService : IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(int userId, string email, bool isAdmin)
+    public string GenerateToken(User user)
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, isAdmin ? "Admin" : "User"),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.FullName),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "Employee"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

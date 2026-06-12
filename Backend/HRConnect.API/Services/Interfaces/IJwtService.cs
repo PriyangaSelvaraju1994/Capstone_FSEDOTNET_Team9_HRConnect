@@ -1,4 +1,6 @@
+using HRConnect.API.Entities;
+
 public interface IJwtService
 {
-    string GenerateToken(int userId, string email, bool isAdmin);
+    string GenerateToken(User user);
 }
