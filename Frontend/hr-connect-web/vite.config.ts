@@ -6,10 +6,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // When the real backend is wired up, requests to /api are proxied to it.
-      // While the mock JSON auth is in use, this proxy is unused.
+      // Proxy `/api/*` to the .NET backend (see Backend launchSettings.json).
+      // We hit the HTTP profile to avoid dev-cert prompts; switch to
+      // `https://localhost:7181` once the cert is trusted.
       '/api': {
-        target: 'https://localhost:5001',
+        target: 'https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net/api',
         secure: false,
         changeOrigin: true,
       },
