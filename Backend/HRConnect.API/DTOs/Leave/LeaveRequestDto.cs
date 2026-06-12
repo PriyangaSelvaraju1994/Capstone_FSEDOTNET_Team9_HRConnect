@@ -1,8 +1,12 @@
+
+namespace HRConnect.API.DTOs;
 public class LeaveRequestDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
-    public Guid EmployeeId { get; set; }
+    public int EmployeeId { get; set; }
+
+    public string EmployeeName { get; set; }
 
     public string LeaveType { get; set; }
 
