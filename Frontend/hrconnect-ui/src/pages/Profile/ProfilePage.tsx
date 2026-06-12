@@ -238,14 +238,12 @@ function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
           <Field
             id="firstName"
             label="First name"
-            placeholder="Rino"
             error={errors.firstName?.message}
             {...register('firstName')}
           />
           <Field
             id="lastName"
             label="Last name"
-            placeholder="Rexy"
             error={errors.lastName?.message}
             {...register('lastName')}
           />
