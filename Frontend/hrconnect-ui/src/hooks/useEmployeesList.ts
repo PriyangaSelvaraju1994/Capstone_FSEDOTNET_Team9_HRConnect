@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchDesignations,
@@ -10,7 +10,7 @@ import {
   fetchPendingCount,
   selectPendingCount,
 } from '../store/slices/leavesSlice';
-import type { Department } from '../types/auth';
+import type { Department, Designation } from '../types/auth';
 import { usePagination } from './usePagination';
 import { useSearch } from './useSearch';
 import { useFilters } from './useFilters';
@@ -20,9 +20,9 @@ export interface UseEmployeesListOptions {
   pageSize?: number;
 }
 
-interface EmployeeFilters {
+interface EmployeeFilters extends Record<string, unknown> {
   department: Department | 'All';
-  designation: string | 'All';
+  designation: Designation | 'All';
 }
 
 /**
@@ -100,7 +100,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
   );
 
   const setDesignation = useCallback(
-    (desig: string | 'All') => {
+    (desig: Designation | 'All') => {
       filterState.setFilter('designation', desig);
       pagination.resetPage();
     },
@@ -128,10 +128,10 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
   return {
     // Data
     employees: list.items,
-    totalCount: list.totalCount,
+    totalCount: list.total,
     loading,
     error,
-    designations: designations.items,
+    designations: designations,
     pendingCount,
 
     // Search

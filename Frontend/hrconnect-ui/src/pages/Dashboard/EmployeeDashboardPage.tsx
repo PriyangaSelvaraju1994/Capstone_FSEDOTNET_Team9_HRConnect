@@ -22,7 +22,7 @@ import { getGreeting } from '../../utils/user';
 
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
-  const userId = user?.id ?? '';
+  const userId = user?.id ?? 0;
   const { data, loading, error, refetch } = useEmployeeDashboard({ userId });
 
   return (
@@ -53,7 +53,7 @@ export default function EmployeeDashboardPage() {
           {loading || !data
             ? range(4).map((i) => <LeaveBalanceCardSkeleton key={i} />)
             : data.balances.map((b) => (
-                <LeaveBalanceCard key={b.type} balance={b} />
+                <LeaveBalanceCard key={b.leaveType} balance={b} />
               ))}
         </div>
       </section>

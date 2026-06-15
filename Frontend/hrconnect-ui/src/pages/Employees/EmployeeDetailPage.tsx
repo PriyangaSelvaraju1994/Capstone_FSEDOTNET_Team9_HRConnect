@@ -33,7 +33,7 @@ export default function EmployeeDetailPage() {
     pendingCount,
     refetch,
     handleDelete,
-  } = useEmployeeDetail({ employeeId: id, historyPageSize: HISTORY_PAGE_SIZE });
+  } = useEmployeeDetail({ employeeId: Number(id), historyPageSize: HISTORY_PAGE_SIZE });
 
   if (!id) return <Navigate to="/employees" replace />;
   if (isNotFound) return <Navigate to="/404" replace />;
@@ -136,12 +136,12 @@ export default function EmployeeDetailPage() {
             ) : (
               <ul className="space-y-3">
                 {balances.map((b) => {
-                  const meta = getLeaveTypeMeta(b.type);
+                  const meta = getLeaveTypeMeta(b.leaveType);
                   const Icon = meta.Icon;
-                  const remaining = Math.max(0, b.total - b.used);
+                  const remaining = Math.max(0, b.totalDays - b.usedDays);
                   return (
                     <li
-                      key={b.type}
+                      key={b.leaveType}
                       className="flex items-center justify-between"
                     >
                       <span className="inline-flex items-center gap-2 text-sm">
@@ -152,7 +152,7 @@ export default function EmployeeDetailPage() {
                         {meta.label}
                       </span>
                       <span className="text-sm font-semibold">
-                        {remaining} / {b.total}
+                        {remaining} / {b.totalDays}
                       </span>
                     </li>
                   );
@@ -211,7 +211,7 @@ export default function EmployeeDetailPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {history.map((req) => {
-                    const meta = getLeaveTypeMeta(req.type);
+                    const meta = getLeaveTypeMeta(req.leaveType);
                     const Icon = meta.Icon;
                     return (
                       <tr key={req.id}>

@@ -39,7 +39,7 @@ export function AppHeader({ pendingCount, hasUnreadNotifications }: Props) {
   const { user, isAdmin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navItems = isAdmin ? buildAdminNav(pendingCount) : EMPLOYEE_NAV;
-  const initials = user ? getInitials(user.firstName, user.lastName) : '··';
+  const initials = user ? getInitials(user.firstName ?? '', user.lastName ?? '') : '··';
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
@@ -56,10 +56,9 @@ export function AppHeader({ pendingCount, hasUnreadNotifications }: Props) {
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-slate-100 text-slate-900 font-medium'
-                      : 'text-slate-600 hover:bg-slate-100'
+                  `px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 ${isActive
+                    ? 'bg-slate-100 text-slate-900 font-medium'
+                    : 'text-slate-600 hover:bg-slate-100'
                   }`
                 }
               >

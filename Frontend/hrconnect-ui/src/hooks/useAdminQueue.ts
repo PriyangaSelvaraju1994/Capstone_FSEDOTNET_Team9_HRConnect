@@ -76,7 +76,7 @@ export function useAdminQueue() {
     if (!selected) return null;
     return leavesApi.computePreview(
       selectedBalances,
-      selected.type,
+      selected.leaveType,
       selected.startDate,
       selected.endDate,
     );

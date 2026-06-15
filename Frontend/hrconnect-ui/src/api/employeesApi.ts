@@ -17,7 +17,7 @@ export const employeesApi = {
       .get<EmployeeListResult>('/employees', { params })
       .then((r) => r.data),
 
-  getById: (id: string): Promise<Employee> =>
+  getById: (id: number): Promise<Employee> =>
     http.get<Employee>(`/employees/${id}`).then((r) => r.data),
 
   listDesignations: (): Promise<string[]> =>
@@ -26,9 +26,9 @@ export const employeesApi = {
   create: (values: EmployeeFormValues): Promise<Employee> =>
     http.post<Employee>('/employees', values).then((r) => r.data),
 
-  update: (id: string, values: EmployeeFormValues): Promise<Employee> =>
+  update: (id: number, values: EmployeeFormValues): Promise<Employee> =>
     http.put<Employee>(`/employees/${id}`, values).then((r) => r.data),
 
-  remove: (id: string): Promise<void> =>
+  remove: (id: number): Promise<void> =>
     http.delete<void>(`/employees/${id}`).then(() => undefined),
 };

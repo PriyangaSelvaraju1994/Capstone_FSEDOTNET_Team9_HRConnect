@@ -19,7 +19,7 @@ import {
 import { useConfirmDialog } from './useConfirmDialog';
 
 export interface UseEmployeeDetailOptions {
-  employeeId: string | undefined;
+  employeeId: number | undefined;
   historyPageSize?: number;
 }
 
@@ -37,7 +37,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const emp = useAppSelector(selectEmployeeById(employeeId));
   const byIdStatus = useAppSelector(selectEmployeeByIdStatus);
   const isNotFound = useAppSelector(selectEmployeeIsNotFound(employeeId));
-  const balances = useAppSelector(selectBalancesFor(employeeId ?? ''));
+  const balances = useAppSelector(selectBalancesFor(employeeId ?? 0));
   const history = useAppSelector(selectEmployeeHistory);
   const pendingCount = useAppSelector(selectPendingCount);
 
@@ -56,7 +56,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     void dispatch(fetchEmployeeById(employeeId));
     void dispatch(fetchBalances(employeeId));
     void dispatch(
-      fetchEmployeeHistory({ employeeId, pageSize: historyPageSize }),
+      fetchEmployeeHistory({ employeeId }),
     );
     void dispatch(fetchPendingCount());
   }, [dispatch, employeeId, historyPageSize]);

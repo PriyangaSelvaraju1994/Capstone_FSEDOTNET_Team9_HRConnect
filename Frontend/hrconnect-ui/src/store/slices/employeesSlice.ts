@@ -37,12 +37,12 @@ export interface EmployeesState {
     status: AsyncStatus;
   };
   byId: {
-    entries: Record<string, Employee>;
+    entries: Record<number, Employee>;
     status: AsyncStatus;
     error: string | null;
     /** Discriminates between "haven't fetched" and "fetched but 404". */
-    notFoundIds: string[];
-    fetchingId: string | null;
+    notFoundIds: number[];
+    fetchingId: number | null;
   };
   mutation: {
     status: AsyncStatus;
@@ -102,12 +102,12 @@ export const fetchDesignations = createAsyncThunk<
 export interface FetchEmployeeRejection {
   message: string;
   notFound: boolean;
-  id: string;
+  id: number;
 }
 
 export const fetchEmployeeById = createAsyncThunk<
   Employee,
-  string,
+  number,
   { rejectValue: FetchEmployeeRejection }
 >('employees/fetchById', async (id, { rejectWithValue }) => {
   try {
@@ -147,7 +147,7 @@ export const createEmployee = createAsyncThunk<
 
 export const updateEmployee = createAsyncThunk<
   Employee,
-  { id: string; values: EmployeeFormValues },
+  { id: number; values: EmployeeFormValues },
   { rejectValue: MutateEmployeeRejection }
 >('employees/update', async ({ id, values }, { rejectWithValue }) => {
   try {
@@ -158,8 +158,8 @@ export const updateEmployee = createAsyncThunk<
 });
 
 export const deleteEmployee = createAsyncThunk<
-  string,
-  string,
+  number,
+  number,
   { rejectValue: string }
 >('employees/delete', async (id, { rejectWithValue }) => {
   try {
@@ -313,11 +313,11 @@ import type { RootState } from '../store';
 
 export const selectEmployeeList = (s: RootState) => s.employees.list;
 export const selectDesignations = (s: RootState) => s.employees.designations.items;
-export const selectEmployeeById = (id: string | undefined) => (s: RootState) =>
+export const selectEmployeeById = (id: number | undefined) => (s: RootState) =>
   id ? s.employees.byId.entries[id] ?? null : null;
 export const selectEmployeeByIdStatus = (s: RootState) => s.employees.byId;
-export const selectEmployeeIsNotFound = (id: string | undefined) => (s: RootState) =>
-  Boolean(id) && s.employees.byId.notFoundIds.includes(id as string);
+export const selectEmployeeIsNotFound = (id: number | undefined) => (s: RootState) =>
+  Boolean(id) && s.employees.byId.notFoundIds.includes(id ?? 0);
 export const selectEmployeeMutation = (s: RootState) => s.employees.mutation;
 
 export default employeesSlice.reducer;

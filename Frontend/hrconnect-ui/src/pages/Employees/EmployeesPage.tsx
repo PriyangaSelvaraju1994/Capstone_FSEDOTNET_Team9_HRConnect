@@ -8,15 +8,15 @@ import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 import { useEmployeesList } from '../../hooks/useEmployeesList';
-import type { Department } from '../../types/auth';
+import type { Department, Designation } from '../../types/auth';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { getInitials } from '../../utils/user';
 
 const DEPARTMENTS: Array<Department | 'All'> = [
   'All',
-  'Engineering',
-  'Design',
+  'IT',
+  'QE',
   'Sales',
   'HR',
 ];
@@ -82,7 +82,7 @@ export default function EmployeesPage() {
             label="Designation"
             value={designation}
             options={['All', ...designations]}
-            onChange={setDesignation}
+             onChange={(v) => setDesignation(v as Designation | 'All')}
           />
         </div>
       </div>

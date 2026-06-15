@@ -24,7 +24,7 @@ export interface SelectionState<T> {
 export function useSelection<T>(
   options: UseSelectionOptions<T>,
 ): SelectionState<T> {
-  const { items, initialSelectedId = null, getId, autoSelectFirst = true } = options;
+  const { items, initialSelectedId = null, getId } = options;
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
 
   const selected = items.find((item) => getId(item) === selectedId) ?? null;

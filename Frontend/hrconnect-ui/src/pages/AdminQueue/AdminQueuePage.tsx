@@ -124,7 +124,7 @@ export default function AdminQueuePage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {requests.map((req) => {
-                  const meta = getLeaveTypeMeta(req.type);
+                  const meta = getLeaveTypeMeta(req.leaveType);
                   const Icon = meta.Icon;
                   const isSelected = req.id === selectedId;
                   return (

@@ -83,7 +83,7 @@ const initialState: LeavesState = {
 // --- Thunks ----------------------------------------------------------------
 
 export const fetchMyLeaves = createAsyncThunk<
-  LeaveRequest[],
+  LeaveListResult,
   LeaveListParams,
   { rejectValue: string }
 >('leaves/mine', async (params, { rejectWithValue }) => {
@@ -217,14 +217,15 @@ const leavesSlice = createSlice({
         state.myLeaves.appliedParams = action.meta.arg;
       })
       .addCase(fetchMyLeaves.fulfilled, (state, action) => {
-        debugger
         state.myLeaves.status = 'succeeded';
-        state.myLeaves.items = action.payload;
-        state.myLeaves.total = action.payload.length;
+        state.myLeaves.items = action.payload.items;
+        state.myLeaves.total = action.payload.total;
+        state.myLeaves.page = action.payload.page;
+        state.myLeaves.pageSize = action.payload.pageSize;
       })
-      .addCase(fetchMyLeaves.rejected, (state) => {
+      .addCase(fetchMyLeaves.rejected, (state, action) => {
         state.myLeaves.status = 'failed';
-        state.myLeaves.error = 'Could not load your leaves.';
+        state.myLeaves.error = action.payload ?? 'Could not load your leaves.';
       })
 
       // --- fetchEmployeeHistory
@@ -240,9 +241,10 @@ const leavesSlice = createSlice({
         state.employeeHistory.page = action.payload.page;
         state.employeeHistory.pageSize = action.payload.pageSize;
       })
-      .addCase(fetchEmployeeHistory.rejected, (state) => {
+      .addCase(fetchEmployeeHistory.rejected, (state, action) => {
         state.employeeHistory.status = 'failed';
-        state.employeeHistory.error = 'Could not load leave history.';
+        state.employeeHistory.error =
+          action.payload ?? 'Could not load leave history.';
       })
 
       // --- fetchBalances

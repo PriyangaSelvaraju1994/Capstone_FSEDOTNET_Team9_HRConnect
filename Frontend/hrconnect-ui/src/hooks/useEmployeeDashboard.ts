@@ -6,7 +6,7 @@ import {
 } from '../store/slices/dashboardSlice';
 
 export interface UseEmployeeDashboardOptions {
-  userId: string;
+  userId: number;
 }
 
 /**

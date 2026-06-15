@@ -120,7 +120,7 @@ export default function ProfilePage() {
 interface ProfileCardProps {
   loading: boolean;
   emp: Employee | null;
-  userId: string;
+  userId: number;
   profileSaved: boolean;
   profileSaveError: string | null;
   handleUpdateProfile: (data: ProfileFormValues) => Promise<void>;

@@ -11,7 +11,7 @@ import {
 import type { ProfileFormValues, PasswordFormValues } from '../types/forms';
 
 export interface UseProfileOptions {
-  userId: string;
+  userId: number;
 }
 
 /**
