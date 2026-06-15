@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
@@ -8,135 +7,43 @@ import { ErrorBanner } from '../../components/ErrorBanner';
 import { LeaveDetailPanel } from '../../components/LeaveDetailPanel';
 import { PageHeader } from '../../components/PageHeader';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  approveLeave,
-  fetchPendingQueue,
-  rejectLeave,
-  selectLeaveMutation,
-  selectPendingQueue,
-} from '../../store/slices/leavesSlice';
-import { leavesApi } from '../../api/leavesApi';
-import type { LeaveBalance, LeaveRequest } from '../../types/leave';
+import { useAdminQueue } from '../../hooks/useAdminQueue';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { formatDateRange, formatRelative } from '../../utils/formatDate';
 
 export default function AdminQueuePage() {
-  const dispatch = useAppDispatch();
-  const queue = useAppSelector(selectPendingQueue);
-  const mutation = useAppSelector(selectLeaveMutation);
-  const data = queue.items;
-  const loading = queue.status === 'loading' && data.length === 0;
-  const error = queue.status === 'failed' ? queue.error : null;
+  const {
+    requests,
+    loading,
+    error,
+    mutation,
+    selectedId,
+    setSelectedId,
+    selected,
+    preview,
+    selectNext,
+    selectPrev,
+    busy,
+    handleApprove,
+    handleReject,
+    refetch,
+  } = useAdminQueue();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
+  // Keyboard shortcuts: J/K for navigation, A for approve, R for reject, Esc to deselect
+  useKeyboardShortcuts({
+    shortcuts: [
+      { key: 'j', handler: selectNext },
+      { key: 'k', handler: selectPrev },
+      { key: 'a', handler: handleApprove },
+      { key: 'r', handler: handleReject },
+      { key: 'Escape', handler: () => setSelectedId(null) },
+    ],
+    enabled: requests.length > 0 && !busy,
+  });
 
-  // Initial + manual reloads.
-  useEffect(() => {
-    void dispatch(fetchPendingQueue());
-  }, [dispatch]);
-
-  function refetch() {
-    void dispatch(fetchPendingQueue());
-  }
-
-  // Auto-select the first item whenever the list resolves or shrinks.
-  useEffect(() => {
-    if (data.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-    if (!selectedId || !data.some((r) => r.id === selectedId)) {
-      setSelectedId(data[0].id);
-    }
-  }, [data, selectedId]);
-
-  const selected = useMemo<LeaveRequest | null>(
-    () => data.find((r) => r.id === selectedId) ?? null,
-    [data, selectedId],
-  );
-
-  // Balances for the currently-selected employee — fetched on selection
-  // change so the preview reflects their actual remaining allowance.
-  const [selectedBalances, setSelectedBalances] = useState<LeaveBalance[]>(
-    [],
-  );
-  useEffect(() => {
-    if (!selected) {
-      setSelectedBalances([]);
-      return;
-    }
-    let cancelled = false;
-    leavesApi
-      .getBalances(selected.employeeId)
-      .then((bals) => {
-        if (!cancelled) setSelectedBalances(bals);
-      })
-      .catch(() => {
-        if (!cancelled) setSelectedBalances([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selected]);
-
-  const preview = useMemo(() => {
-    if (!selected) return null;
-    return leavesApi.computePreview(
-      selectedBalances,
-      selected.type,
-      selected.startDate,
-      selected.endDate,
-    );
-  }, [selected, selectedBalances]);
-
-  // J/K/A/R/Esc keyboard shortcuts.
-  useEffect(() => {
-    if (data.length === 0) return;
-    function onKey(e: KeyboardEvent) {
-      // Ignore when typing in an input.
-      const t = e.target as HTMLElement | null;
-      if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
-      const idx = data.findIndex((r) => r.id === selectedId);
-      if (e.key === 'j' || e.key === 'J') {
-        e.preventDefault();
-        setSelectedId(data[(idx + 1) % data.length]?.id ?? null);
-      } else if (e.key === 'k' || e.key === 'K') {
-        e.preventDefault();
-        const prev = idx <= 0 ? data.length - 1 : idx - 1;
-        setSelectedId(data[prev]?.id ?? null);
-      } else if (e.key === 'a' || e.key === 'A') {
-        if (selectedId) void decide('approve');
-      } else if (e.key === 'r' || e.key === 'R') {
-        if (selectedId) void decide('reject');
-      }
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, selectedId]);
-
-  async function decide(action: 'approve' | 'reject') {
-    if (!selectedId || busy) return;
-    setBusy(action);
-    try {
-      if (action === 'approve') {
-        await dispatch(approveLeave(selectedId)).unwrap();
-      } else {
-        await dispatch(rejectLeave(selectedId)).unwrap();
-      }
-      // The slice already removes the row + decrements pendingCount,
-      // so the row count below stays in sync without a refetch.
-    } catch {
-      // Surfaced via mutation banner.
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  const total = data.length;
+  const total = requests.length;
 
   return (
     <AppShell pendingCount={total}>
@@ -192,7 +99,7 @@ export default function AdminQueuePage() {
         >
           {loading ? (
             <SkeletonRows />
-          ) : data.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="p-2">
               <EmptyState
                 Icon={Inbox}
@@ -216,8 +123,8 @@ export default function AdminQueuePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {data.map((req) => {
-                  const meta = getLeaveTypeMeta(req.type);
+                {requests.map((req) => {
+                  const meta = getLeaveTypeMeta(req.leaveType);
                   const Icon = meta.Icon;
                   const isSelected = req.id === selectedId;
                   return (
@@ -273,15 +180,15 @@ export default function AdminQueuePage() {
               request={selected}
               preview={preview}
               onClose={() => setSelectedId(null)}
-              onApprove={() => decide('approve')}
-              onReject={() => decide('reject')}
+              onApprove={handleApprove}
+              onReject={handleReject}
               busy={busy}
             />
           </div>
         )}
       </div>
 
-      {data.length > 0 && (
+      {requests.length > 0 && (
         <p className="text-xs text-slate-500 mt-4">
           After approve/reject, the panel auto-advances to the next request.
           Press <Kbd>Esc</Kbd> to close.

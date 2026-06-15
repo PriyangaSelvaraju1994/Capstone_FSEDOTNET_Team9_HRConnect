@@ -30,7 +30,7 @@ import {
 import type { Department } from '../../types/auth';
 import type { EmployeeRole } from '../../types/employee';
 
-const DEPARTMENTS: Department[] = ['Engineering', 'Design', 'Sales', 'HR'];
+const DEPARTMENTS: Department[] = ['IT', 'QE', 'Sales', 'HR'];
 const ROLES: EmployeeRole[] = ['Employee', 'HR Admin'];
 
 const schema = z.object({
@@ -40,7 +40,7 @@ const schema = z.object({
     .string()
     .min(1, 'Email is required')
     .email('Enter a valid work email'),
-  department: z.enum(['Engineering', 'Design', 'Sales', 'HR']),
+  department: z.enum(['IT', 'QE', 'Sales', 'HR']),
   designation: z.string().trim().min(1, 'Designation is required'),
   joiningDate: z.string().min(1, 'Joining date is required'),
   role: z.enum(['Employee', 'HR Admin']),
@@ -56,7 +56,7 @@ interface Props {
 export default function EmployeeFormPage({ mode }: Props) {
   const navigate = useNavigate();
   const params = useParams<{ id: string }>();
-  const editId = mode === 'edit' ? params.id : undefined;
+  const editId = mode === 'edit' ? Number(params.id) : undefined;
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
@@ -82,7 +82,7 @@ export default function EmployeeFormPage({ mode }: Props) {
       firstName: '',
       lastName: '',
       email: '',
-      department: 'Engineering',
+      department: 'IT',
       designation: '',
       joiningDate: new Date().toISOString().slice(0, 10),
       role: 'Employee',

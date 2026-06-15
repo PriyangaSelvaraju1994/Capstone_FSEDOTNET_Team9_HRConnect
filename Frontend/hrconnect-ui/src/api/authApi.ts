@@ -14,8 +14,10 @@ import { http } from './client';
 import type {
   AuthResponse,
   Department,
+  Designation,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   User,
 } from '../types/auth';
 import {
@@ -32,6 +34,11 @@ interface RawAuthResponse {
   fullName?: string;
   isAdmin?: boolean;
   department?: Department;
+  designation?: Designation;
+}
+
+interface RawRegisterResponse {
+  message?: string;
 }
 
 function splitName(full: string): { firstName: string; lastName: string } {
@@ -87,8 +94,9 @@ function normaliseAuthResponse(
     (typeof claims?.isAdmin === 'boolean' ? claims.isAdmin : undefined) ??
     false;
 
-  const department: Department =
-    raw.user?.department ?? raw.department ?? 'Engineering';
+  const department: Department = raw.user?.department ?? raw.department ?? 'IT';
+  const designation: Designation =
+    raw.user?.designation ?? raw.designation ?? 'Software Engineer';
 
   const id = raw.user?.id ?? (typeof claims?.sub === 'string' ? claims.sub : email);
 
@@ -98,6 +106,7 @@ function normaliseAuthResponse(
     lastName,
     email,
     department,
+    designation,
     isAdmin,
   };
 
@@ -111,10 +120,12 @@ export const authApi = {
       .then((r) => normaliseAuthResponse(r.data, req.email));
   },
 
-  register(req: RegisterRequest): Promise<AuthResponse> {
+  register(req: RegisterRequest): Promise<RegisterResponse> {
     return http
-      .post<RawAuthResponse>('/auth/register', req)
-      .then((r) => normaliseAuthResponse(r.data, req.email));
+      .post<RawRegisterResponse>('/auth/register', req)
+      .then((r) => ({
+        message: r.data.message ?? 'Registration successful. Please sign in.',
+      }));
   },
 
   logout(): Promise<void> {

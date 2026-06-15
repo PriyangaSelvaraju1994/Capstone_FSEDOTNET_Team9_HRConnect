@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,10 +14,17 @@ import {
 import { useAppDispatch } from '../../store/hooks';
 import { registerThunk } from '../../store/slices/authSlice';
 import { useAuth } from '../../hooks/useAuth';
-import type { Department } from '../../types/auth';
+import type { Department, Designation } from '../../types/auth';
 import { scorePassword, strengthLabel } from '../../utils/passwordStrength';
 
-const DEPARTMENTS: Department[] = ['Engineering', 'Design', 'Sales', 'HR'];
+const DEPARTMENTS = ['IT', 'QE', 'Sales', 'HR'] as const satisfies readonly Department[];
+const DESIGNATIONS = [
+  'Software Engineer',
+  'QA',
+  'Finance',
+  'Engineer',
+  'Architect',
+] as const satisfies readonly Designation[];
 
 const schema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
@@ -31,13 +38,15 @@ const schema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Add at least one uppercase letter')
     .regex(/[0-9]/, 'Add at least one digit'),
-  department: z.enum(['Engineering', 'Design', 'Sales', 'HR']),
+  department: z.enum(DEPARTMENTS),
+  designation: z.enum(DESIGNATIONS),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { isAuthenticated, status, error, clearError } = useAuth();
 
   const {
@@ -52,7 +61,8 @@ export default function RegisterPage() {
       lastName: '',
       email: '',
       password: '',
-      department: 'Engineering',
+      department: 'IT',
+      designation: 'Software Engineer',
     },
   });
 
@@ -68,7 +78,13 @@ export default function RegisterPage() {
   }
 
   const onSubmit = handleSubmit(async (values) => {
-    await dispatch(registerThunk(values));
+    const { firstName, lastName, ...rest } = values; // to satisfy exhaustiveness checking
+    const fullName = `${firstName} ${lastName}`;
+    const result = await dispatch(registerThunk({ ...rest, fullName })).unwrap();
+    navigate('/login', {
+      replace: true,
+      state: { successMessage: result.message },
+    });
   });
 
   const submitting = status === 'loading';
@@ -120,9 +136,8 @@ export default function RegisterPage() {
                     autoComplete="given-name"
                     aria-invalid={Boolean(errors.firstName)}
                     aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.firstName ? 'border-rose-400' : 'border-slate-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.firstName ? 'border-rose-400' : 'border-slate-300'
+                      }`}
                     {...register('firstName')}
                   />
                   {errors.firstName && (
@@ -140,10 +155,8 @@ export default function RegisterPage() {
                     autoComplete="family-name"
                     aria-invalid={Boolean(errors.lastName)}
                     aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.lastName ? 'border-rose-400' : 'border-slate-300'
-                    }`}
-                    placeholder="Rexy"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.lastName ? 'border-rose-400' : 'border-slate-300'
+                      }`}
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -164,10 +177,8 @@ export default function RegisterPage() {
                   autoComplete="email"
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'email-error' : undefined}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                    errors.email ? 'border-rose-400' : 'border-slate-300'
-                  }`}
-                  placeholder="you@company.com"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.email ? 'border-rose-400' : 'border-slate-300'
+                    }`}
                   {...register('email')}
                 />
                 {errors.email && (
@@ -189,9 +200,8 @@ export default function RegisterPage() {
                   aria-describedby={
                     errors.password ? 'password-error' : 'password-strength'
                   }
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                    errors.password ? 'border-rose-400' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.password ? 'border-rose-400' : 'border-slate-300'
+                    }`}
                   placeholder="At least 8 characters"
                   {...register('password')}
                 />
@@ -234,6 +244,28 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              <div>
+                <label htmlFor="designation" className="block text-sm font-medium mb-1">
+                  Designation
+                </label>
+                <div className="relative">
+                  <select
+                    id="designation"
+                    className="w-full appearance-none px-3 py-2 border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    {...register('designation')}
+                  >
+                    {DESIGNATIONS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="w-4 h-4 absolute right-3 top-3 text-slate-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
               <button
                 type="submit"
                 disabled={submitting}

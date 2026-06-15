@@ -11,10 +11,10 @@ interface Props {
  * and (later) the My Leaves page header.
  */
 export function LeaveBalanceCard({ balance }: Props) {
-  const meta = getLeaveTypeMeta(balance.type);
+  const meta = getLeaveTypeMeta(balance.leaveType);
   const Icon = meta.Icon;
-  const remaining = Math.max(0, balance.total - balance.used);
-  const pct = balance.total === 0 ? 0 : Math.round((remaining / balance.total) * 100);
+  const remaining = Math.max(0, balance.totalDays - balance.usedDays);
+  const pct = balance.totalDays === 0 ? 0 : Math.round((remaining / balance.totalDays) * 100);
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-4">
       <div className={`flex items-center gap-2 mb-2 ${meta.accent}`}>
@@ -23,13 +23,13 @@ export function LeaveBalanceCard({ balance }: Props) {
       </div>
       <div className="flex items-baseline gap-1">
         <span className="text-2xl font-semibold">{remaining}</span>
-        <span className="text-sm text-slate-500">/ {balance.total} days</span>
+        <span className="text-sm text-slate-500">/ {balance.totalDays} days</span>
       </div>
       <div
         className="mt-2 h-1.5 bg-slate-100 rounded"
         role="progressbar"
         aria-valuemin={0}
-        aria-valuemax={balance.total}
+        aria-valuemax={balance.totalDays}
         aria-valuenow={remaining}
         aria-label={`${meta.label} leave remaining`}
       >

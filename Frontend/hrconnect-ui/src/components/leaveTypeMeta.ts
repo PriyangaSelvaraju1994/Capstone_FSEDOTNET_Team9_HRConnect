@@ -16,13 +16,13 @@ interface LeaveTypeMeta {
 }
 
 const META: Record<LeaveType, LeaveTypeMeta> = {
-  Annual: {
+  Earned: {
     Icon: Palmtree,
     text: 'text-emerald-600',
     bg: 'bg-emerald-100',
     bar: 'bg-emerald-500',
     accent: 'text-emerald-700',
-    label: 'Annual',
+    label: 'Earned',
   },
   Sick: {
     Icon: Thermometer,
@@ -32,13 +32,13 @@ const META: Record<LeaveType, LeaveTypeMeta> = {
     accent: 'text-sky-700',
     label: 'Sick',
   },
-  Personal: {
+  Casual: {
     Icon: Baby,
     text: 'text-violet-600',
     bg: 'bg-violet-100',
     bar: 'bg-violet-500',
     accent: 'text-violet-700',
-    label: 'Personal',
+    label: 'Casual',
   },
   CompOff: {
     Icon: Briefcase,

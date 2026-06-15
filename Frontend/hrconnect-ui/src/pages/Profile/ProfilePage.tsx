@@ -17,16 +17,9 @@ import { Avatar } from '../../components/Avatar';
 import { ErrorBanner } from '../../components/ErrorBanner';
 import { PageHeader } from '../../components/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  changePassword,
-  clearPasswordState,
-  clearProfileUpdateState,
-  fetchProfile,
-  selectProfile,
-  updateProfile,
-} from '../../store/slices/profileSlice';
+import { useProfile } from '../../hooks/useProfile';
 import type { Employee } from '../../types/employee';
+import type { ProfileFormValues, PasswordFormValues } from '../../types/forms';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { formatDate } from '../../utils/formatDate';
 import { getInitials } from '../../utils/user';
@@ -41,7 +34,6 @@ const profileSchema = z.object({
     .optional()
     .or(z.literal('')),
 });
-type ProfileValues = z.infer<typeof profileSchema>;
 
 const passwordSchema = z
   .object({
@@ -57,25 +49,25 @@ const passwordSchema = z
     path: ['confirmPassword'],
     message: "Passwords don't match",
   });
-type PasswordValues = z.infer<typeof passwordSchema>;
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const userId = user?.id ?? '';
 
-  const dispatch = useAppDispatch();
-  const profile = useAppSelector(selectProfile);
-  const emp = profile.data;
-  const loading = profile.status === 'loading' && !emp;
-  const error = profile.status === 'failed' ? profile.error : null;
-
-  useEffect(() => {
-    if (userId) void dispatch(fetchProfile(userId));
-  }, [dispatch, userId]);
-
-  function refetch() {
-    if (userId) void dispatch(fetchProfile(userId));
-  }
+  const {
+    employee: emp,
+    loading,
+    error,
+    profileSaved,
+    profileSaveError,
+    handleUpdateProfile,
+    clearProfileState,
+    passwordChanged,
+    passwordChangeError,
+    handleChangePassword,
+    clearPasswordState: clearPwdState,
+    refetch,
+  } = useProfile({ userId });
 
   return (
     <AppShell maxWidth="max-w-3xl">
@@ -93,11 +85,24 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <ProfileCard loading={loading} emp={emp} userId={userId} />
+      <ProfileCard
+        loading={loading}
+        emp={emp}
+        userId={userId}
+        profileSaved={profileSaved}
+        profileSaveError={profileSaveError}
+        handleUpdateProfile={handleUpdateProfile}
+        clearProfileState={clearProfileState}
+      />
 
       <div className="h-6" />
 
-      <PasswordCard />
+      <PasswordCard
+        passwordChanged={passwordChanged}
+        passwordChangeError={passwordChangeError}
+        handleChangePassword={handleChangePassword}
+        clearPasswordState={clearPwdState}
+      />
 
       <div className="mt-6 text-right">
         <button
@@ -115,22 +120,29 @@ export default function ProfilePage() {
 interface ProfileCardProps {
   loading: boolean;
   emp: Employee | null;
-  userId: string;
+  userId: number;
+  profileSaved: boolean;
+  profileSaveError: string | null;
+  handleUpdateProfile: (data: ProfileFormValues) => Promise<void>;
+  clearProfileState: () => void;
 }
 
-function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
-  const dispatch = useAppDispatch();
-  const profile = useAppSelector(selectProfile);
-  const saved = profile.updateStatus === 'succeeded';
-  const saveError =
-    profile.updateStatus === 'failed' ? profile.updateError : null;
+function ProfileCard({
+  loading,
+  emp,
+  userId,
+  profileSaved,
+  profileSaveError,
+  handleUpdateProfile,
+  clearProfileState,
+}: ProfileCardProps) {
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<ProfileValues>({
+  } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { firstName: '', lastName: '', phone: '' },
   });
@@ -142,24 +154,17 @@ function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
         lastName: emp.lastName,
         phone: emp.phone ?? '',
       });
-      // Reset any prior banner state when the record (re-)loads.
-      dispatch(clearProfileUpdateState());
+      clearProfileState();
     }
-  }, [emp, reset, dispatch]);
+  }, [emp, reset, clearProfileState]);
 
   const onSubmit = handleSubmit(async (values) => {
     if (!userId) return;
-    await dispatch(
-      updateProfile({
-        userId,
-        payload: {
-          firstName: values.firstName,
-          lastName: values.lastName,
-          phone: values.phone?.trim() || undefined,
-        },
-      }),
-    );
-    // Banner state is driven entirely by the slice (saved / saveError).
+    await handleUpdateProfile({
+      firstName: values.firstName,
+      lastName: values.lastName,
+      phone: values.phone?.trim() || undefined,
+    });
   });
 
   const initials = emp ? getInitials(emp.firstName, emp.lastName) : '··';
@@ -208,7 +213,7 @@ function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
         )}
       </div>
 
-      {saveError && (
+      {profileSaveError && (
         <div
           role="alert"
           className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
@@ -217,10 +222,10 @@ function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
             className="w-4 h-4 mt-0.5 flex-none"
             aria-hidden="true"
           />
-          <span>{saveError}</span>
+          <span>{profileSaveError}</span>
         </div>
       )}
-      {saved && (
+      {profileSaved && (
         <div
           role="status"
           className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
@@ -298,22 +303,26 @@ function ProfileCard({ loading, emp, userId }: ProfileCardProps) {
   );
 }
 
-function PasswordCard() {
-  const dispatch = useAppDispatch();
-  const profile = useAppSelector(selectProfile);
-  const submitError =
-    profile.passwordStatus === 'failed' && !profile.passwordErrorField
-      ? profile.passwordError
-      : null;
-  const done = profile.passwordStatus === 'succeeded';
+interface PasswordCardProps {
+  passwordChanged: boolean;
+  passwordChangeError: string | null;
+  handleChangePassword: (data: PasswordFormValues) => Promise<void>;
+  clearPasswordState: () => void;
+}
+
+function PasswordCard({
+  passwordChanged,
+  passwordChangeError,
+  handleChangePassword,
+  clearPasswordState,
+}: PasswordCardProps) {
 
   const {
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors, isSubmitting },
-  } = useForm<PasswordValues>({
+  } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
       currentPassword: '',
@@ -322,39 +331,25 @@ function PasswordCard() {
     },
   });
 
-  // Surface server-side field errors (e.g. "current password is wrong") on the
-  // matching field once the rejected action lands in the store.
-  useEffect(() => {
-    if (
-      profile.passwordStatus === 'failed' &&
-      profile.passwordErrorField &&
-      profile.passwordError
-    ) {
-      setError(profile.passwordErrorField, {
-        message: profile.passwordError,
-      });
-    }
-  }, [profile.passwordStatus, profile.passwordErrorField, profile.passwordError, setError]);
-
   const onSubmit = handleSubmit(async (values) => {
-    const result = await dispatch(
-      changePassword({
+    try {
+      await handleChangePassword({
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
-      }),
-    );
-    if (changePassword.fulfilled.match(result)) {
+        confirmPassword: values.confirmPassword,
+      });
       reset();
+    } catch {
+      // Error surfaced via passwordChangeError
     }
   });
 
-  // Clear the slice's password state when this card unmounts so navigating
-  // away and back doesn't show a stale success banner.
+  // Clear password state when unmounting
   useEffect(
     () => () => {
-      dispatch(clearPasswordState());
+      clearPasswordState();
     },
-    [dispatch],
+    [clearPasswordState],
   );
 
   return (
@@ -364,7 +359,7 @@ function PasswordCard() {
         You'll need to sign in again after changing.
       </p>
 
-      {submitError && (
+      {passwordChangeError && (
         <div
           role="alert"
           className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
@@ -373,10 +368,10 @@ function PasswordCard() {
             className="w-4 h-4 mt-0.5 flex-none"
             aria-hidden="true"
           />
-          <span>{submitError}</span>
+          <span>{passwordChangeError}</span>
         </div>
       )}
-      {done && (
+      {passwordChanged && (
         <div
           role="status"
           className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"

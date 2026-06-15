@@ -12,7 +12,7 @@ interface Props {
   label?: string;
 }
 
-const OPTIONS: LeaveType[] = ['Annual', 'Sick', 'Personal', 'CompOff'];
+const OPTIONS: LeaveType[] = ['Earned', 'Sick', 'Casual', 'CompOff'];
 
 /**
  * Custom listbox-style leave-type dropdown matching the S5 wireframe.
@@ -127,7 +127,7 @@ export function LeaveTypeDropdown({
               const meta = getLeaveTypeMeta(opt);
               const Icon = meta.Icon;
               const isSelected = opt === value;
-              const bal = balances?.find((b) => b.type === opt);
+              const bal = balances?.find((b) => b.leaveType === opt);
               return (
                 <li
                   key={opt}
@@ -153,7 +153,7 @@ export function LeaveTypeDropdown({
                   </span>
                   {bal && (
                     <span className="text-xs text-slate-500">
-                      {Math.max(0, bal.total - bal.used)} / {bal.total} days
+                      {Math.max(0, bal.totalDays - bal.usedDays)} / {bal.totalDays} days
                     </span>
                   )}
                 </li>

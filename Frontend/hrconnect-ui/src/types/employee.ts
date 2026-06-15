@@ -3,7 +3,7 @@ import type { Department } from './auth';
 export type EmployeeRole = 'Employee' | 'HR Admin';
 
 export interface Employee {
-  id: string;
+  id: number;
   employeeCode: string;
   firstName: string;
   lastName: string;
@@ -13,7 +13,7 @@ export interface Employee {
   designation: string;
   role: EmployeeRole;
   joiningDate: string; // ISO date
-  managerId?: string;
+  managerId?: number;
   managerName?: string;
 }
 

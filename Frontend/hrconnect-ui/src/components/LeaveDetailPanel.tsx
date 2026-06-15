@@ -30,7 +30,7 @@ export function LeaveDetailPanel({
   onReject,
   busy = null,
 }: Props) {
-  const meta = getLeaveTypeMeta(request.type);
+  const meta = getLeaveTypeMeta(request.leaveType);
   const TypeIcon = meta.Icon;
 
   useEffect(() => {
