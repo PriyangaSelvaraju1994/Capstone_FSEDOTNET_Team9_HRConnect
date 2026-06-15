@@ -17,7 +17,6 @@ import type {
   CreateLeaveRequest,
   LeaveBalance,
   LeaveListParams,
-  LeaveListResult,
   LeaveRequest,
 } from '../../types/leave';
 import { toMessage, type AsyncStatus } from '../asyncStatus';
@@ -83,7 +82,7 @@ const initialState: LeavesState = {
 // --- Thunks ----------------------------------------------------------------
 
 export const fetchMyLeaves = createAsyncThunk<
-  LeaveListResult,
+  LeaveRequest[],
   LeaveListParams,
   { rejectValue: string }
 >('leaves/mine', async (params, { rejectWithValue }) => {
@@ -95,16 +94,15 @@ export const fetchMyLeaves = createAsyncThunk<
 });
 
 export const fetchEmployeeHistory = createAsyncThunk<
-  LeaveListResult & { employeeId: number },
+  LeaveRequest[],
   LeaveListParams,
   { rejectValue: string }
 >(
   'leaves/fetchEmployeeHistory',
   async (params, { rejectWithValue }) => {
     try {
-      const employeeId = params.employeeId ?? 0;
       const res = await leavesApi.list(params);
-      return { ...res, employeeId };
+      return res;
     } catch (err) {
       return rejectWithValue(toMessage(err, 'Could not load leave history.'));
     }
@@ -218,14 +216,14 @@ const leavesSlice = createSlice({
       })
       .addCase(fetchMyLeaves.fulfilled, (state, action) => {
         state.myLeaves.status = 'succeeded';
-        state.myLeaves.items = action.payload.items;
-        state.myLeaves.total = action.payload.total;
-        state.myLeaves.page = action.payload.page;
-        state.myLeaves.pageSize = action.payload.pageSize;
+        state.myLeaves.items = action.payload;
+        state.myLeaves.total = action.payload.length;
+        state.myLeaves.page = 1;
+        state.myLeaves.pageSize = action.payload.length;
       })
-      .addCase(fetchMyLeaves.rejected, (state, action) => {
+      .addCase(fetchMyLeaves.rejected, (state) => {
         state.myLeaves.status = 'failed';
-        state.myLeaves.error = action.payload ?? 'Could not load your leaves.';
+        state.myLeaves.error = 'Could not load your leaves.';
       })
 
       // --- fetchEmployeeHistory
@@ -236,15 +234,12 @@ const leavesSlice = createSlice({
       })
       .addCase(fetchEmployeeHistory.fulfilled, (state, action) => {
         state.employeeHistory.status = 'succeeded';
-        state.employeeHistory.items = action.payload.items;
-        state.employeeHistory.total = action.payload.total;
-        state.employeeHistory.page = action.payload.page;
-        state.employeeHistory.pageSize = action.payload.pageSize;
+        state.employeeHistory.items = action.payload;
+        state.employeeHistory.total = action.payload.length;
       })
-      .addCase(fetchEmployeeHistory.rejected, (state, action) => {
+      .addCase(fetchEmployeeHistory.rejected, (state) => {
         state.employeeHistory.status = 'failed';
-        state.employeeHistory.error =
-          action.payload ?? 'Could not load leave history.';
+        state.employeeHistory.error = 'Could not load leave history.';
       })
 
       // --- fetchBalances
