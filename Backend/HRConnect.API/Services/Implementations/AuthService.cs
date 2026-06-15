@@ -1,23 +1,25 @@
 using HRConnect.API.Data;
 using HRConnect.API.DTOs.Auth;
+using HRConnect.API.DTOs.Employee;
 using HRConnect.API.Entities;
 using HRConnect.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace HRConnect.API.Services.Implementations;
 
 public class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IEmployeeService _employeeService;
     private const int SaltSize = 16;
     private const int KeySize = 32;
     private const int Iterations = 100_000;
 
-    public AuthService(ApplicationDbContext context)
+    public AuthService(ApplicationDbContext context, IEmployeeService employeeService)
     {
         _context = context;
+        _employeeService = employeeService;
     }
 
     public async Task<User?> GetUserByEmailAsync(string email)
@@ -140,37 +142,57 @@ public class AuthService : IAuthService
     public async Task<User> RegisterUserAsync(RegisterRequestDto request)
     {
         var normalizedEmail = NormalizeEmail(request.Email);
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
         var user = new User
         {
-            FullName = request.FullName,
+            FullName = GetFullName(request),
             Email = normalizedEmail,
-            PasswordHash = HashPassword(request.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             IsAdmin = false
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
+        await _employeeService.CreateEmployeeAsync(new CreateEmployeeDto
+        {
+            UserId = user.Id,
+            Department = string.IsNullOrWhiteSpace(request.Department)
+                ? "Engineering"
+                : request.Department,
+            Designation = string.IsNullOrWhiteSpace(request.Designation)
+                ? "Employee"
+                : request.Designation,
+            JoiningDate = request.DateOfJoining ?? DateTime.UtcNow.Date
+        });
+
+        await transaction.CommitAsync();
+
         return user;
     }
 
-    private static string HashPassword(string password)
+    private static string GetFullName(RegisterRequestDto request)
     {
-        var salt = RandomNumberGenerator.GetBytes(SaltSize);
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return request.FullName.Trim();
+        }
 
-#pragma warning disable SYSLIB0060
-        using var pbkdf2 = new Rfc2898DeriveBytes(
-            password,
-            salt,
-            Iterations,
-            HashAlgorithmName.SHA256);
-        var key = pbkdf2.GetBytes(KeySize);
-#pragma warning restore SYSLIB0060
-
-        return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
+        return $"{request.FirstName} {request.LastName}".Trim();
     }
 
     private static bool VerifyPassword(string hashedPassword, string password)
+    {
+        if (hashedPassword.StartsWith("$2", StringComparison.Ordinal))
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        }
+
+        return VerifyLegacyPassword(hashedPassword, password);
+    }
+
+    private static bool VerifyLegacyPassword(string hashedPassword, string password)
     {
         var parts = hashedPassword.Split('.');
         if (parts.Length != 3)
