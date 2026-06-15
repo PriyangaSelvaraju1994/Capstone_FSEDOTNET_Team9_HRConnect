@@ -28,6 +28,7 @@ public class EmployeeService : IEmployeeService
             {
                 Id = e.Id,
                 UserId = e.UserId,
+                FullName = e.User != null ? e.User.FullName : string.Empty,
                 Department = e.Department,
                 Designation = e.Designation,
                 JoiningDate = e.JoiningDate
@@ -43,19 +44,23 @@ public class EmployeeService : IEmployeeService
             throw new BadRequestException("Employee ID is invalid.");
         }
         //Fetching the employee from the database
-        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+        var employee = await _context.Employees
+            .Select(e => new EmployeeDto
+            {
+                Id = e.Id,
+                UserId = e.UserId,
+                FullName = e.User != null ? e.User.FullName : string.Empty,
+                Department = e.Department,
+                Designation = e.Designation,
+                JoiningDate = e.JoiningDate
+            })
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (employee == null)
         {
             throw new NotFoundException($"Employee with ID {id} not found.");
         }
-        return new EmployeeDto
-        {
-            Id = employee.Id,
-            UserId = employee.UserId,
-            Department = employee.Department,
-            Designation = employee.Designation,
-            JoiningDate = employee.JoiningDate
-        };
+        return employee;
     }
 
     public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeDto request)
