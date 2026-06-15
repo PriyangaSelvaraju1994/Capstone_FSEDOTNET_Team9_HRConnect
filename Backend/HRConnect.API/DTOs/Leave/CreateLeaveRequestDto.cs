@@ -1,6 +1,8 @@
+namespace HRConnect.API.DTOs;
+
 public class CreateLeaveRequestDto
 {
-    public Guid EmployeeId { get; set; }
+    public int EmployeeId { get; set; }
 
     public required string LeaveType { get; set; }
 

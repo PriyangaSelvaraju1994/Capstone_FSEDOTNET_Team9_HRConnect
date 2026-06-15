@@ -1,26 +1,75 @@
+using HRConnect.API.DTOs;
+using HRConnect.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+
 namespace HRConnect.API.Controllers;
+
 [ApiController]
 [Route("api/leaves")]
 public class LeaveController : ControllerBase
 {
+    private readonly ILeaveService _leaveService;
+
+    public LeaveController(
+        ILeaveService leaveService)
+    {
+        _leaveService = leaveService;
+    }
+
+    [Authorize]
     [HttpPost]
-    public IActionResult ApplyLeave(CreateLeaveRequestDto request)
+    public async Task<IActionResult> ApplyLeave(
+        CreateLeaveRequestDto request)
     {
-        return Ok("Leave request submitted successfully");
+   
+    var result =
+        await _leaveService.ApplyLeaveAsync(request);
+
+        return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("mine")]
-    public IActionResult GetMyLeaves()
+    public async Task<IActionResult> GetMyLeaves(
+        int employeeId)
     {
-        return Ok("Retrieved my leaves successfully");
+        var leaves =
+            await _leaveService.GetMyLeavesAsync(employeeId);
+
+        return Ok(leaves);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}/status")]
-    public IActionResult UpdateStatus(
-        Guid id,
+    public async Task<IActionResult> UpdateStatus(
+        int id,
         UpdateLeaveStatusDto request)
     {
-        return Ok("Leave status updated successfully");
+        var result =
+            await _leaveService.UpdateStatusAsync(
+                id,
+                request);
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("leavebalances/{employeeId}")]
+    public async Task<IActionResult> GetLeaveBalance(
+        int employeeId)
+    {
+        var balance =
+            await _leaveService.GetLeaveBalanceAsync(employeeId);
+
+        return Ok(balance);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllLeaves()
+    {
+        var leaves = await _leaveService.GetAllLeavesAsync();
+
+        return Ok(leaves);
     }
 }
