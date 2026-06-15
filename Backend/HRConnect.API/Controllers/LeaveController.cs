@@ -1,5 +1,6 @@
 using HRConnect.API.DTOs;
 using HRConnect.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRConnect.API.Controllers;
