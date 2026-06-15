@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   cancelLeave,
@@ -11,7 +11,7 @@ import { usePagination } from './usePagination';
 import { useConfirmDialog } from './useConfirmDialog';
 
 export interface UseMyLeavesOptions {
-  userId: string;
+  userId: number;
   pageSize?: number;
 }
 
@@ -33,29 +33,42 @@ export function useMyLeaves(options: UseMyLeavesOptions) {
   const loading = myLeaves.status === 'loading';
   const error = myLeaves.status === 'failed' ? myLeaves.error : null;
 
-  // Fetch whenever filter/page/user changes
+  // Fetch once per user; filtering and pagination are handled client-side.
   useEffect(() => {
     if (!userId) return;
     void dispatch(
       fetchMyLeaves({
-        employeeId: userId,
-        status,
-        page: pagination.page,
-        pageSize: pagination.pageSize,
+        employeeId: userId
       }),
     );
-  }, [dispatch, userId, status, pagination.page, pagination.pageSize]);
+  }, [dispatch, userId]);
 
   const refetch = useCallback(() => {
     void dispatch(
       fetchMyLeaves({
-        employeeId: userId,
-        status,
-        page: pagination.page,
-        pageSize: pagination.pageSize,
+        employeeId: userId
       }),
     );
-  }, [dispatch, userId, status, pagination.page, pagination.pageSize]);
+  }, [dispatch, userId]);
+
+  const filteredLeaves = useMemo(() => {
+    if (status === 'All') return myLeaves.items;
+    return myLeaves.items.filter((leave) => leave.status === status);
+  }, [myLeaves.items, status]);
+
+  const totalCount = filteredLeaves.length;
+  const startIndex = (pagination.page - 1) * pagination.pageSize;
+  const pagedLeaves = filteredLeaves.slice(
+    startIndex,
+    startIndex + pagination.pageSize,
+  );
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
+    if (pagination.page > maxPage) {
+      pagination.setPage(maxPage);
+    }
+  }, [totalCount, pagination.page, pagination.pageSize, pagination.setPage]);
 
   const changeStatus = useCallback(
     (next: LeaveStatusFilter) => {
@@ -88,8 +101,8 @@ export function useMyLeaves(options: UseMyLeavesOptions) {
 
   return {
     // Data
-    leaves: myLeaves.items,
-    totalCount: myLeaves.totalCount,
+    leaves: pagedLeaves,
+    totalCount,
     loading,
     error,
     mutation,

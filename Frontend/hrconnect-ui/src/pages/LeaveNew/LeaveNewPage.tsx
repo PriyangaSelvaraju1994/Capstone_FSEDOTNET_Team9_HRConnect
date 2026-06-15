@@ -17,7 +17,7 @@ const REASON_MAX = 500;
 
 const schema = z
   .object({
-    type: z.enum(['Annual', 'Sick', 'Personal', 'CompOff']),
+    type: z.enum(['Earned', 'Sick', 'Casual', 'CompOff']),
     startDate: z.string().min(1, 'Pick a start date'),
     endDate: z.string().min(1, 'Pick an end date'),
     reason: z
@@ -41,14 +41,14 @@ function today(): string {
 
 export default function LeaveNewPage() {
   const { user } = useAuth();
-  const userId = user?.id ?? '';
+  const userId = user?.id ?? 0;
 
   const {
     balances,
     submitError,
     computePreview,
     handleSubmit: submitLeave,
-  } = useLeaveForm({ userId });
+  } = useLeaveForm({ userId: Number(userId) });
 
   const {
     register,
@@ -59,7 +59,7 @@ export default function LeaveNewPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      type: 'Annual',
+      type: 'Earned',
       startDate: today(),
       endDate: today(),
       reason: '',

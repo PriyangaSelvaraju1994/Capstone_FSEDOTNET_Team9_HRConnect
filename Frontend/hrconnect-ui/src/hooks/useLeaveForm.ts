@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -10,7 +10,7 @@ import { leavesApi } from '../api/leavesApi';
 import type { LeaveType } from '../types/leave';
 
 export interface UseLeaveFormOptions {
-  userId: string;
+  userId: number;
   redirectPath?: string;
 }
 
@@ -52,7 +52,7 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
       await dispatch(
         createLeave({
           employeeId: userId,
-          type: values.type,
+          leaveType: values.type,
           startDate: values.startDate,
           endDate: values.endDate,
           reason: values.reason?.trim() || undefined,
@@ -61,9 +61,14 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
       // Refresh balances after submission
       void dispatch(fetchBalances(userId));
       navigate(redirectPath);
+      
     } catch (e) {
       setSubmitError(
-        e instanceof Error ? e.message : 'Could not submit your request.',
+        typeof e === 'string'
+          ? e
+          : e instanceof Error
+            ? e.message
+            : 'Could not submit your request.',
       );
     }
   };

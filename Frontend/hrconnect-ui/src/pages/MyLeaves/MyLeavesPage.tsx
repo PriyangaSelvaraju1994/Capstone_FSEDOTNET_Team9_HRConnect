@@ -16,7 +16,7 @@ import { formatDate, formatDateRange } from '../../utils/formatDate';
 
 export default function MyLeavesPage() {
   const { user } = useAuth();
-  const userId = user?.id ?? '';
+  const userId = user?.id ?? 0;
 
   const {
     leaves,
@@ -76,7 +76,7 @@ export default function MyLeavesPage() {
           <ErrorBanner message={mutation.error} />
         </div>
       )}
-
+      
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         {loading ? (
           <SkeletonTable />
@@ -118,7 +118,7 @@ export default function MyLeavesPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {leaves.map((req) => {
-                  const meta = getLeaveTypeMeta(req.type);
+                  const meta = getLeaveTypeMeta(req.leaveType);
                   const TypeIcon = meta.Icon;
                   return (
                     <tr key={req.id} className="hover:bg-slate-50">

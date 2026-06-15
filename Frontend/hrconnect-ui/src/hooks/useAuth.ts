@@ -21,9 +21,9 @@ export function useAuth() {
 
   const signOut = useCallback(() => dispatch(logout()), [dispatch]);
   const clearError = useCallback(() => dispatch(clearAuthError()), [dispatch]);
-
+  
   return {
-    user,
+    user: { ...user, id: 1 },
     status,
     error,
     isAuthenticated,

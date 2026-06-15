@@ -1,4 +1,5 @@
-export type Department = 'Engineering' | 'Design' | 'Sales' | 'HR';
+export type Department = 'IT' | 'QE' | 'Sales' | 'HR';
+export type Designation = 'Software Engineer' | 'QA' | 'Finance' | 'Engineer' | 'Architect';
 
 export interface User {
   id: string;
@@ -6,6 +7,7 @@ export interface User {
   lastName: string;
   email: string;
   department: Department;
+  designation: Designation;
   isAdmin: boolean;
 }
 
@@ -15,11 +17,15 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   password: string;
   department: Department;
+  designation: Designation;
+}
+
+export interface RegisterResponse {
+  message: string;
 }
 
 export interface AuthResponse {

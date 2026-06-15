@@ -1,4 +1,4 @@
-export type LeaveType = 'Annual' | 'Sick' | 'Personal' | 'CompOff';
+export type LeaveType = 'Earned' | 'Sick' | 'Casual' | 'CompOff';
 export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
 
 /** Status values that the My-Leaves filter chips expose (S4). */
@@ -12,17 +12,18 @@ export const LEAVE_STATUS_FILTERS = [
 export type LeaveStatusFilter = (typeof LEAVE_STATUS_FILTERS)[number];
 
 export interface LeaveBalance {
-  type: LeaveType;
-  used: number;
-  total: number;
+  leaveType: LeaveType;
+  usedDays: number;
+  totalDays: number;
+  remainingDays: number;
 }
 
 export interface LeaveRequest {
   id: string;
-  employeeId: string;
+  employeeId: number;
   employeeName: string;
   employeeInitials: string;
-  type: LeaveType;
+  leaveType: LeaveType;
   days: number;
   startDate: string; // ISO date
   endDate: string; // ISO date
@@ -36,8 +37,8 @@ export interface LeaveRequest {
 
 /** Payload accepted by `leavesApi.create()` (S5). */
 export interface CreateLeaveRequest {
-  employeeId: string;
-  type: LeaveType;
+  employeeId: number;
+  leaveType: LeaveType;
   startDate: string;
   endDate: string;
   reason?: string;
@@ -56,10 +57,7 @@ export interface LeaveBalancePreview {
 }
 
 export interface LeaveListParams {
-  employeeId?: string;
-  status?: LeaveStatusFilter;
-  page?: number;
-  pageSize?: number;
+  employeeId?: number;
 }
 
 export interface LeaveListResult {
@@ -78,7 +76,7 @@ export type HrActivityAction = 'requested' | 'approved' | 'rejected';
 
 export interface HrActivityEntry {
   id: string;
-  actorId: string;
+  actorId: number;
   actorName: string;
   actorInitials: string;
   action: HrActivityAction;
