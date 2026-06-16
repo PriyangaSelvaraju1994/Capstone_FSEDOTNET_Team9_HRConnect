@@ -19,12 +19,19 @@ import { useAuth } from '../../hooks/useAuth';
 import { useEmployeeDashboard } from '../../hooks/useEmployeeDashboard';
 import { range } from '../../utils/array';
 import { getGreeting } from '../../utils/user';
+import { useMyLeaves } from '../../hooks/useMyLeaves';
 
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
   const userId = user?.id ?? 0;
   const { data, loading, error, refetch } = useEmployeeDashboard({ userId });
+  const {
+      leaves: leavesData,
+      loading: leavesLoading,
+      error: leavesError,
+    } = useMyLeaves({ userId });
 
+  console.log('EmployeeDashboardPage data:', data);
   return (
     <AppShell>
       <PageHeader
@@ -52,7 +59,7 @@ export default function EmployeeDashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {loading || !data
             ? range(4).map((i) => <LeaveBalanceCardSkeleton key={i} />)
-            : data.balances.map((b) => (
+            : data.map((b) => (
                 <LeaveBalanceCard key={b.leaveType} balance={b} />
               ))}
         </div>
@@ -97,13 +104,13 @@ export default function EmployeeDashboardPage() {
             </Link>
           }
         >
-          {loading ? (
+          {leavesLoading ? (
             <ul className="divide-y divide-slate-100">
               {range(3).map((i) => (
                 <LeaveRequestRowSkeleton key={i} />
               ))}
             </ul>
-          ) : !data || data.recentRequests.length === 0 ? (
+          ) : !leavesData || leavesData.length === 0 || leavesError ? (
             <EmptyState
               Icon={CalendarDays}
               title="No requests yet"
@@ -120,7 +127,7 @@ export default function EmployeeDashboardPage() {
             />
           ) : (
             <ul className="divide-y divide-slate-100">
-              {data.recentRequests.map((r) => (
+              {leavesData?.slice(-3).map((r) => (
                 <LeaveRequestRow key={r.id} request={r} />
               ))}
             </ul>

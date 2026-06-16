@@ -68,8 +68,11 @@ export interface LeaveListResult {
 }
 
 export interface EmployeeDashboardData {
-  balances: LeaveBalance[];
-  recentRequests: LeaveRequest[];
+  employeeId: number;
+  leaveType: LeaveType;
+  remainingDays: number;
+  totalDays: number;
+  usedDays: number;
 }
 
 export type HrActivityAction = 'requested' | 'approved' | 'rejected';
