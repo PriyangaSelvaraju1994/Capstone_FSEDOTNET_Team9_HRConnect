@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<LeaveBalance> LeaveBalances { get; set; }
 
+    public DbSet<Holiday> Holidays { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -37,5 +39,29 @@ public class ApplicationDbContext : DbContext
             .HasOne(lb => lb.Employee)
             .WithMany(e => e.LeaveBalances)
             .HasForeignKey(lb => lb.EmployeeId);
+
+        modelBuilder.Entity<Holiday>().HasData(
+            new Holiday
+            {
+                Id = 1,
+                HolidayName = "New Year's Day",
+                HolidayDate = new DateTime(2026, 1, 1),
+                Description = "New Year's Day"
+            },
+            new Holiday
+            {
+                Id = 2,
+                HolidayName = "Republic Day",
+                HolidayDate = new DateTime(2026, 1, 26),
+                Description = "Republic Day"
+            },
+            new Holiday
+            {
+                Id = 3,
+                HolidayName = "Independence Day",
+                HolidayDate = new DateTime(2026, 8, 15),
+                Description = "Independence Day"
+            }
+        );
     }
 }

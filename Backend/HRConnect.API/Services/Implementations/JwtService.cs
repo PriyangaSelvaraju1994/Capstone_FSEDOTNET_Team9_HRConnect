@@ -1,4 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
+using HRConnect.API.Services.Interfaces;
+using HRConnect.API.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

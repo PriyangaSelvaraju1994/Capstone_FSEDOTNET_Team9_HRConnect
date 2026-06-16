@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using System.Text.Json;
 
 namespace HRConnect.API.Services.Implementations;
 
@@ -39,6 +39,18 @@ public class LeaveService : ILeaveService
                 "End date cannot be earlier than start date.");
         }
 
+// cannot apply leave on holidays
+        var holidays = await _context.Holidays
+            .Where(h =>
+                h.HolidayDate.Date >= request.StartDate.Date &&
+                h.HolidayDate.Date <= request.EndDate.Date)
+            .ToListAsync();
+
+        if (holidays.Any())
+        {
+            throw new ValidationException(
+                "Leave cannot be applied on holidays.");
+        }
         //condition to check if the start date is more than 15 days in the past
         if (request.StartDate < DateTime.Today.AddDays(-15))
         {
@@ -50,10 +62,10 @@ public class LeaveService : ILeaveService
         if (CalculateLeaveDays(request.StartDate, request.EndDate) == 0)
         {
             throw new ValidationException(
-                "Leave cannot be applied for a period that only includes weekends.");
+                "Leave cannot be applied for a period that only includes weekends/Holidays.");
         }
 
-        var overlappingLeave = await _context.LeaveRequests
+        var overlappingLeave = await _context.LeaveRequests?
             .AnyAsync(l =>
                 l.EmployeeId == request.EmployeeId &&
                 (l.Status == LeaveStatus.Pending.ToString() ||
@@ -77,14 +89,12 @@ public class LeaveService : ILeaveService
             Status = "Pending"
         };
      var leaveDays =
-    (request.EndDate.Date - request.StartDate.Date).Days + 1;
+    CalculateLeaveDays(request.StartDate, request.EndDate);
 
-    
     var balance = await _context.LeaveBalances
     .FirstOrDefaultAsync(lb =>
         lb.EmployeeId == request.EmployeeId &&
         lb.LeaveType == request.LeaveType);
-
         var availableDays =
     balance.TotalDays - balance.UsedDays;
 
@@ -94,7 +104,6 @@ public class LeaveService : ILeaveService
         throw new ValidationException(
     $"Insufficient leave balance. Available days: {availableDays}");
     }
-   
         _context.LeaveRequests.Add(leave);
 
         await _context.SaveChangesAsync();
@@ -207,8 +216,10 @@ public class LeaveService : ILeaveService
             date <= endDate.Date;
             date = date.AddDays(1))
         {
+            bool isHoliday = _context.Holidays
+                .Any(h => h.HolidayDate.Date == date);
             if (date.DayOfWeek != DayOfWeek.Saturday &&
-                date.DayOfWeek != DayOfWeek.Sunday)
+                date.DayOfWeek != DayOfWeek.Sunday && !isHoliday)
             {
                 days++;
             }
