@@ -2,12 +2,12 @@ export type Department = 'IT' | 'QE' | 'Sales' | 'HR';
 export type Designation = 'Software Engineer' | 'QA' | 'Finance' | 'Engineer' | 'Architect';
 
 export interface User {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
-  department: Department;
-  designation: Designation;
+  department?: Department;
+  designation?: Designation;
   isAdmin: boolean;
 }
 

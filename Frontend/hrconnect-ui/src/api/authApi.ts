@@ -13,8 +13,8 @@
 import { http } from './client';
 import type {
   AuthResponse,
-  Department,
-  Designation,
+  // Department,
+  // Designation,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -22,19 +22,17 @@ import type {
 } from '../types/auth';
 import {
   decodeJwt,
-  emailFromClaims,
+  // emailFromClaims,
   expiresAtFromClaims,
 } from '../utils/jwt';
 
 interface RawAuthResponse {
-  accessToken?: string;
-  token?: string;
-  expiresAt?: string;
-  user?: Partial<User>;
-  fullName?: string;
-  isAdmin?: boolean;
-  department?: Department;
-  designation?: Designation;
+  resultSet: {
+    token?: string;
+    name: string;
+    isAdmin?: boolean;
+    userId?: number;
+  }
 }
 
 interface RawRegisterResponse {
@@ -62,22 +60,23 @@ function normaliseAuthResponse(
   raw: RawAuthResponse,
   fallbackEmail?: string,
 ): AuthResponse {
-  const accessToken = raw.accessToken ?? raw.token;
+  const resultSet = raw.resultSet ?? {};
+  const accessToken = resultSet.token;
   if (!accessToken) {
     throw new Error('Auth response did not include a token.');
   }
 
   const claims = decodeJwt(accessToken);
-  const email =
-    raw.user?.email ?? emailFromClaims(claims) ?? fallbackEmail ?? '';
+  const email = fallbackEmail ?? '';
+  //   resultSet.user?.email ?? emailFromClaims(claims) ?? fallbackEmail ?? '';
 
-  const expiresAt = raw.expiresAt ?? expiresAtFromClaims(claims);
+  const expiresAt = expiresAtFromClaims(claims);
 
-  let firstName = raw.user?.firstName ?? '';
-  let lastName = raw.user?.lastName ?? '';
+  let firstName = '';
+  let lastName = '';
   if (!firstName && !lastName) {
-    if (raw.fullName) {
-      const split = splitName(raw.fullName);
+    if (resultSet.name) {
+      const split = splitName(resultSet.name);
       firstName = split.firstName;
       lastName = split.lastName;
     } else if (email) {
@@ -88,25 +87,25 @@ function normaliseAuthResponse(
   }
 
   const isAdmin =
-    raw.user?.isAdmin ??
-    raw.isAdmin ??
+    resultSet?.isAdmin ??
+    resultSet.isAdmin ??
     (typeof claims?.is_admin === 'boolean' ? claims.is_admin : undefined) ??
     (typeof claims?.isAdmin === 'boolean' ? claims.isAdmin : undefined) ??
     false;
 
-  const department: Department = raw.user?.department ?? raw.department ?? 'IT';
-  const designation: Designation =
-    raw.user?.designation ?? raw.designation ?? 'Software Engineer';
+  // const department: Department = resultSet?.department ?? raw.department ?? 'IT';
+  // const designation: Designation =
+  //   resultSet?.designation ?? raw.designation ?? 'Software Engineer';
 
-  const id = raw.user?.id ?? (typeof claims?.sub === 'string' ? claims.sub : email);
+  // const id = resultSet?.userId ?? (typeof claims?.sub === 'string' ? claims.sub : email);
 
   const user: User = {
-    id,
+    id: resultSet?.userId ?? 0,
     firstName,
     lastName,
     email,
-    department,
-    designation,
+    // department,
+    // designation,
     isAdmin,
   };
 
