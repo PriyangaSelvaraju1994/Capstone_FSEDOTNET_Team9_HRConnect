@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,20 +10,14 @@ import { Breadcrumb } from '../../components/Breadcrumb';
 import { LeaveTypeDropdown } from '../../components/LeaveTypeDropdown';
 import { PageHeader } from '../../components/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  createLeave,
-  fetchBalances,
-  selectBalancesFor,
-} from '../../store/slices/leavesSlice';
-import { leavesApi } from '../../api/leavesApi';
+import { useLeaveForm } from '../../hooks/useLeaveForm';
 import type { LeaveType } from '../../types/leave';
 
 const REASON_MAX = 500;
 
 const schema = z
   .object({
-    type: z.enum(['Annual', 'Sick', 'Personal', 'CompOff']),
+    type: z.enum(['Earned', 'Sick', 'Casual', 'CompOff']),
     startDate: z.string().min(1, 'Pick a start date'),
     endDate: z.string().min(1, 'Pick an end date'),
     reason: z
@@ -46,18 +40,15 @@ function today(): string {
 }
 
 export default function LeaveNewPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const userId = user?.id ?? '';
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const userId = user?.id ?? 0;
 
-  const dispatch = useAppDispatch();
-  const balances = useAppSelector(selectBalancesFor(userId));
-
-  // Pull balances into the store on mount; the dropdown + preview both read them.
-  useEffect(() => {
-    if (userId) void dispatch(fetchBalances(userId));
-  }, [dispatch, userId]);
+  const {
+    balances,
+    submitError,
+    computePreview,
+    handleSubmit: submitLeave,
+  } = useLeaveForm({ userId: Number(userId) });
 
   const {
     register,
@@ -68,7 +59,7 @@ export default function LeaveNewPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      type: 'Annual',
+      type: 'Earned',
       startDate: today(),
       endDate: today(),
       reason: '',
@@ -81,36 +72,12 @@ export default function LeaveNewPage() {
   const reason = watch('reason') ?? '';
 
   const preview = useMemo(
-    () => leavesApi.computePreview(balances ?? [], type, startDate, endDate),
-    [balances, type, startDate, endDate],
+    () => computePreview(type, startDate, endDate),
+    [computePreview, type, startDate, endDate],
   );
 
-  // Reset preview when balances arrive (preview re-runs automatically because
-  // it's derived from synchronous mock state that the create() call mutates).
-  useEffect(() => {
-    setSubmitError(null);
-  }, [type, startDate, endDate]);
-
   const onSubmit = handleSubmit(async (values) => {
-    setSubmitError(null);
-    try {
-      await dispatch(
-        createLeave({
-          employeeId: userId,
-          type: values.type,
-          startDate: values.startDate,
-          endDate: values.endDate,
-          reason: values.reason?.trim() || undefined,
-        }),
-      ).unwrap();
-      // Refresh balances so any other open screen sees the deduction once approved.
-      void dispatch(fetchBalances(userId));
-      navigate('/my-leaves');
-    } catch (e) {
-      setSubmitError(
-        e instanceof Error ? e.message : 'Could not submit your request.',
-      );
-    }
+    await submitLeave(values);
   });
 
   return (

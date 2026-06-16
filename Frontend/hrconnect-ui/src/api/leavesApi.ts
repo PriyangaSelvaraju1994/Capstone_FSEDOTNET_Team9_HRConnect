@@ -10,14 +10,13 @@ import type {
   LeaveBalance,
   LeaveBalancePreview,
   LeaveListParams,
-  LeaveListResult,
   LeaveRequest,
   LeaveType,
 } from '../types/leave';
 
 export const leavesApi = {
-  list: (params: LeaveListParams = {}): Promise<LeaveListResult> =>
-    http.get<LeaveListResult>('/leaves', { params }).then((r) => r.data),
+  list: (params: LeaveListParams = {}): Promise<LeaveRequest[]> =>
+    http.get<LeaveRequest[]>('/leaves/mine', { params }).then((r) => r.data),
 
   getById: (id: string): Promise<LeaveRequest> =>
     http.get<LeaveRequest>(`/leaves/${id}`).then((r) => r.data),
@@ -30,9 +29,9 @@ export const leavesApi = {
       .get<{ count: number }>('/leaves/pending/count')
       .then((r) => r.data.count),
 
-  getBalances: (employeeId: string): Promise<LeaveBalance[]> =>
+  getBalances: (employeeId: number): Promise<LeaveBalance[]> =>
     http
-      .get<LeaveBalance[]>(`/employees/${employeeId}/balances`)
+      .get<LeaveBalance[]>(`/leaves/leavebalances/${employeeId}`)
       .then((r) => r.data),
 
   /**

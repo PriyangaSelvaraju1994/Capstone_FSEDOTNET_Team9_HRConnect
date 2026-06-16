@@ -37,16 +37,16 @@ export function computeLeavePreview(
   endIso: string,
 ): LeaveBalancePreview {
   const bal =
-    balances.find((b) => b.type === type) ??
-    ({ type, used: 0, total: 0 } as LeaveBalance);
+    balances.find((b) => b.leaveType === type) ??
+    ({ leaveType: type, usedDays: 0, totalDays: 0, remainingDays: 0 } as LeaveBalance);
   const workingDays = countWorkingDays(startIso, endIso);
-  const projectedUsed = Math.min(bal.total, bal.used + workingDays);
+  const projectedUsed = Math.min(bal.totalDays, bal.usedDays + workingDays);
   return {
     workingDays,
-    currentUsed: bal.used,
-    currentTotal: bal.total,
+    currentUsed: bal.usedDays,
+    currentTotal: bal.totalDays,
     projectedUsed,
-    projectedTotal: bal.total,
-    sufficient: bal.used + workingDays <= bal.total,
+    projectedTotal: bal.totalDays,
+    sufficient: bal.usedDays + workingDays <= bal.totalDays,
   };
 }

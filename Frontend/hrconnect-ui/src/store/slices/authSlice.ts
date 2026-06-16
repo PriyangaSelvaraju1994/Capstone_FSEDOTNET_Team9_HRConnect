@@ -7,9 +7,10 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   User,
 } from '../../types/auth';
-import { loadAuthFromStorage } from '../middleware/localStoragePersistence';
+import { loadAuthFromSessionStorage } from '../middleware/sessionStoragePersistence';
 
 type AuthStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -21,7 +22,7 @@ export interface AuthState {
   error: AuthErrorPayload | null;
 }
 
-const hydrated = loadAuthFromStorage();
+const hydrated = loadAuthFromSessionStorage();
 
 const initialState: AuthState = {
   user: hydrated?.user ?? null,
@@ -55,7 +56,7 @@ export const loginThunk = createAsyncThunk<
 });
 
 export const registerThunk = createAsyncThunk<
-  AuthResponse,
+  RegisterResponse,
   RegisterRequest,
   { rejectValue: AuthErrorPayload }
 >('auth/register', async (req, { rejectWithValue }) => {
@@ -89,14 +90,18 @@ const authSlice = createSlice({
       state.status = 'loading';
       state.error = null;
     };
-    const handleFulfilled = (
+    const handleLoginFulfilled = (
       state: AuthState,
       action: PayloadAction<AuthResponse>,
     ) => {
       state.status = 'succeeded';
-      state.user = action.payload.user;
+      state.user = action.payload.user ?? { id: 1, name: 'Default User', isAdmin: false };
       state.token = action.payload.accessToken;
       state.expiresAt = action.payload.expiresAt;
+      state.error = null;
+    };
+    const handleRegisterFulfilled = (state: AuthState) => {
+      state.status = 'succeeded';
       state.error = null;
     };
     const handleRejected = (
@@ -110,10 +115,10 @@ const authSlice = createSlice({
 
     builder
       .addCase(loginThunk.pending, handlePending)
-      .addCase(loginThunk.fulfilled, handleFulfilled)
+      .addCase(loginThunk.fulfilled, handleLoginFulfilled)
       .addCase(loginThunk.rejected, handleRejected)
       .addCase(registerThunk.pending, handlePending)
-      .addCase(registerThunk.fulfilled, handleFulfilled)
+      .addCase(registerThunk.fulfilled, handleRegisterFulfilled)
       .addCase(registerThunk.rejected, handleRejected);
   },
 });

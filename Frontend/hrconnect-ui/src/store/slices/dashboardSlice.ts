@@ -19,7 +19,7 @@ interface Slot<T> {
 }
 
 export interface DashboardState {
-  employee: Slot<EmployeeDashboardData> & { forUserId: string | null };
+  employee: Slot<EmployeeDashboardData> & { forUserId: number | null };
   hr: Slot<HrDashboardData>;
 }
 
@@ -32,7 +32,7 @@ const initialState: DashboardState = {
 
 export const fetchEmployeeDashboard = createAsyncThunk<
   EmployeeDashboardData,
-  string,
+  number,
   { rejectValue: string }
 >('dashboard/fetchEmployee', async (userId, { rejectWithValue }) => {
   try {

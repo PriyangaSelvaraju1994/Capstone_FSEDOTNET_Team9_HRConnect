@@ -30,6 +30,11 @@ export default function LoginPage() {
   const location = useLocation();
   const { isAuthenticated, status, error, clearError } = useAuth();
 
+  const routeState = location.state as
+    | { from?: string; successMessage?: string }
+    | null;
+  const successMessage = routeState?.successMessage;
+
   const {
     register,
     handleSubmit,
@@ -47,7 +52,7 @@ export default function LoginPage() {
   );
 
   if (isAuthenticated) {
-    const from = (location.state as { from?: string } | null)?.from ?? '/';
+    const from = routeState?.from ?? '/';
     return <Navigate to={from} replace />;
   }
 
@@ -81,6 +86,15 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+            {successMessage && (
+              <div
+                role="status"
+                className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
+              >
+                <span>{successMessage}</span>
+              </div>
+            )}
+
             {error && (
               <div
                 role="alert"
@@ -126,15 +140,6 @@ export default function LoginPage() {
                   <label htmlFor="password" className="block text-sm font-medium">
                     Password
                   </label>
-                  <button
-                    type="button"
-                    className="text-xs text-brand-600 hover:underline"
-                    onClick={() =>
-                      alert('Password recovery is out of scope for Foundation.')
-                    }
-                  >
-                    Forgot?
-                  </button>
                 </div>
                 <div className="relative">
                   <Lock

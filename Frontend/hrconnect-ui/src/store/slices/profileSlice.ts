@@ -40,7 +40,7 @@ const initialState: ProfileState = {
 
 export const fetchProfile = createAsyncThunk<
   Employee,
-  string,
+  number,
   { rejectValue: string }
 >('profile/fetch', async (_userId, { rejectWithValue }) => {
   try {
@@ -52,7 +52,7 @@ export const fetchProfile = createAsyncThunk<
 
 export const updateProfile = createAsyncThunk<
   Employee,
-  { userId: string; payload: ProfileUpdatePayload },
+  { userId: number; payload: ProfileUpdatePayload },
   { rejectValue: string }
 >('profile/update', async ({ payload }, { rejectWithValue }) => {
   try {

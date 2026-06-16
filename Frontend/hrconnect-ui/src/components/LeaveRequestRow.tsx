@@ -16,7 +16,7 @@ interface Props {
  * (later) the full My Leaves table and admin queue.
  */
 export function LeaveRequestRow({ request, showEmployeeName = false }: Props) {
-  const meta = getLeaveTypeMeta(request.type);
+  const meta = getLeaveTypeMeta(request.leaveType);
   const Icon = meta.Icon;
   return (
     <li className="px-5 py-3 flex items-center justify-between">

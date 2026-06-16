@@ -17,7 +17,6 @@ import type {
   CreateLeaveRequest,
   LeaveBalance,
   LeaveListParams,
-  LeaveListResult,
   LeaveRequest,
 } from '../../types/leave';
 import { toMessage, type AsyncStatus } from '../asyncStatus';
@@ -44,12 +43,12 @@ const emptyList = (): ListSlot => ({
 
 export interface LeavesState {
   myLeaves: ListSlot & { appliedParams: LeaveListParams | null };
-  employeeHistory: ListSlot & { forEmployeeId: string | null };
+  employeeHistory: ListSlot & { forEmployeeId: number | null };
   balances: {
-    byEmployeeId: Record<string, LeaveBalance[]>;
+    byEmployeeId: Record<number, LeaveBalance[]>;
     status: AsyncStatus;
     error: string | null;
-    fetchingFor: string | null;
+    fetchingFor: number | null;
   };
   pendingQueue: {
     items: LeaveRequest[];
@@ -83,10 +82,10 @@ const initialState: LeavesState = {
 // --- Thunks ----------------------------------------------------------------
 
 export const fetchMyLeaves = createAsyncThunk<
-  LeaveListResult,
+  LeaveRequest[],
   LeaveListParams,
   { rejectValue: string }
->('leaves/fetchMyLeaves', async (params, { rejectWithValue }) => {
+>('leaves/mine', async (params, { rejectWithValue }) => {
   try {
     return await leavesApi.list(params);
   } catch (err) {
@@ -95,15 +94,15 @@ export const fetchMyLeaves = createAsyncThunk<
 });
 
 export const fetchEmployeeHistory = createAsyncThunk<
-  LeaveListResult & { employeeId: string },
-  { employeeId: string; pageSize?: number; page?: number },
+  LeaveRequest[],
+  LeaveListParams,
   { rejectValue: string }
 >(
   'leaves/fetchEmployeeHistory',
-  async ({ employeeId, pageSize = 10, page = 1 }, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const res = await leavesApi.list({ employeeId, page, pageSize });
-      return { ...res, employeeId };
+      const res = await leavesApi.list(params);
+      return res;
     } catch (err) {
       return rejectWithValue(toMessage(err, 'Could not load leave history.'));
     }
@@ -111,8 +110,8 @@ export const fetchEmployeeHistory = createAsyncThunk<
 );
 
 export const fetchBalances = createAsyncThunk<
-  { employeeId: string; balances: LeaveBalance[] },
-  string,
+  { employeeId: number; balances: LeaveBalance[] },
+  number,
   { rejectValue: string }
 >('leaves/fetchBalances', async (employeeId, { rejectWithValue }) => {
   try {
@@ -217,33 +216,30 @@ const leavesSlice = createSlice({
       })
       .addCase(fetchMyLeaves.fulfilled, (state, action) => {
         state.myLeaves.status = 'succeeded';
-        state.myLeaves.items = action.payload.items;
-        state.myLeaves.total = action.payload.total;
-        state.myLeaves.page = action.payload.page;
-        state.myLeaves.pageSize = action.payload.pageSize;
+        state.myLeaves.items = action.payload;
+        state.myLeaves.total = action.payload.length;
+        state.myLeaves.page = 1;
+        state.myLeaves.pageSize = action.payload.length;
       })
-      .addCase(fetchMyLeaves.rejected, (state, action) => {
+      .addCase(fetchMyLeaves.rejected, (state) => {
         state.myLeaves.status = 'failed';
-        state.myLeaves.error = action.payload ?? 'Could not load your leaves.';
+        state.myLeaves.error = 'Could not load your leaves.';
       })
 
       // --- fetchEmployeeHistory
       .addCase(fetchEmployeeHistory.pending, (state, action) => {
         state.employeeHistory.status = 'loading';
         state.employeeHistory.error = null;
-        state.employeeHistory.forEmployeeId = action.meta.arg.employeeId;
+        state.employeeHistory.forEmployeeId = action.meta.arg.employeeId ?? null;
       })
       .addCase(fetchEmployeeHistory.fulfilled, (state, action) => {
         state.employeeHistory.status = 'succeeded';
-        state.employeeHistory.items = action.payload.items;
-        state.employeeHistory.total = action.payload.total;
-        state.employeeHistory.page = action.payload.page;
-        state.employeeHistory.pageSize = action.payload.pageSize;
+        state.employeeHistory.items = action.payload;
+        state.employeeHistory.total = action.payload.length;
       })
-      .addCase(fetchEmployeeHistory.rejected, (state, action) => {
+      .addCase(fetchEmployeeHistory.rejected, (state) => {
         state.employeeHistory.status = 'failed';
-        state.employeeHistory.error =
-          action.payload ?? 'Could not load leave history.';
+        state.employeeHistory.error = 'Could not load leave history.';
       })
 
       // --- fetchBalances
@@ -292,25 +288,10 @@ const leavesSlice = createSlice({
         state.pendingCount.status = 'failed';
       })
 
-      // --- createLeave success: prepend if the new row matches the current
-      //     myLeaves filter so the user sees their submission immediately.
-      .addCase(createLeave.fulfilled, (state, action) => {
+      // --- createLeave success: new leaves are already visible when the user
+      //     returns to My Leaves (after redirect with success message).
+      .addCase(createLeave.fulfilled, (state) => {
         state.mutation.status = 'succeeded';
-        const params = state.myLeaves.appliedParams;
-        const newReq = action.payload;
-        const matchesEmployee =
-          !params?.employeeId || params.employeeId === newReq.employeeId;
-        const matchesStatus =
-          !params?.status ||
-          params.status === 'All' ||
-          params.status === newReq.status;
-        if (matchesEmployee && matchesStatus) {
-          state.myLeaves.items = [newReq, ...state.myLeaves.items].slice(
-            0,
-            state.myLeaves.pageSize,
-          );
-          state.myLeaves.total += 1;
-        }
       })
 
       // --- cancelLeave success: patch the matching row in any list slot.
@@ -387,7 +368,7 @@ import type { RootState } from '../store';
 
 export const selectMyLeaves = (s: RootState) => s.leaves.myLeaves;
 export const selectEmployeeHistory = (s: RootState) => s.leaves.employeeHistory;
-export const selectBalancesFor = (employeeId: string) => (s: RootState) =>
+export const selectBalancesFor = (employeeId: number) => (s: RootState) =>
   s.leaves.balances.byEmployeeId[employeeId] ?? null;
 export const selectBalancesStatus = (s: RootState) => s.leaves.balances.status;
 export const selectPendingQueue = (s: RootState) => s.leaves.pendingQueue;

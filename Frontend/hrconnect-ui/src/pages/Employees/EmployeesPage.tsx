@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, MoreHorizontal, UserPlus, Users, X } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
@@ -8,115 +7,49 @@ import { ErrorBanner } from '../../components/ErrorBanner';
 import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  fetchDesignations,
-  fetchEmployees,
-  selectDesignations,
-  selectEmployeeList,
-} from '../../store/slices/employeesSlice';
-import {
-  fetchPendingCount,
-  selectPendingCount,
-} from '../../store/slices/leavesSlice';
-import type { Department } from '../../types/auth';
+import { useEmployeesList } from '../../hooks/useEmployeesList';
+import type { Department, Designation } from '../../types/auth';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { getInitials } from '../../utils/user';
 
 const DEPARTMENTS: Array<Department | 'All'> = [
   'All',
-  'Engineering',
-  'Design',
+  'IT',
+  'QE',
   'Sales',
   'HR',
 ];
 
-const PAGE_SIZE = 8;
-
 export default function EmployeesPage() {
-  const [search, setSearch] = useState('');
-  const [department, setDepartment] = useState<Department | 'All'>('All');
-  const [designation, setDesignation] = useState<string | 'All'>('All');
-  const [page, setPage] = useState(1);
-  const debouncedSearch = useDebouncedValue(search, 300);
-
-  const dispatch = useAppDispatch();
-  const list = useAppSelector(selectEmployeeList);
-  const designations = useAppSelector(selectDesignations);
-  const pendingCount = useAppSelector(selectPendingCount);
-  const loading = list.status === 'loading';
-  const error = list.status === 'failed' ? list.error : null;
-
-  // One-time: warm the filter dropdown options and the header badge.
-  useEffect(() => {
-    void dispatch(fetchDesignations());
-    void dispatch(fetchPendingCount());
-  }, [dispatch]);
-
-  // Re-fetch the directory whenever search/filter/page changes.
-  useEffect(() => {
-    void dispatch(
-      fetchEmployees({
-        search: debouncedSearch,
-        department,
-        designation,
-        page,
-        pageSize: PAGE_SIZE,
-      }),
-    );
-  }, [dispatch, debouncedSearch, department, designation, page]);
-
-  function refetch() {
-    void dispatch(
-      fetchEmployees({
-        search: debouncedSearch,
-        department,
-        designation,
-        page,
-        pageSize: PAGE_SIZE,
-      }),
-    );
-  }
-
-  const activeFilters = useMemo(() => {
-    const chips: Array<{ label: string; clear: () => void }> = [];
-    if (department !== 'All') {
-      chips.push({
-        label: `Department: ${department}`,
-        clear: () => {
-          setDepartment('All');
-          setPage(1);
-        },
-      });
-    }
-    if (designation !== 'All') {
-      chips.push({
-        label: `Designation: ${designation}`,
-        clear: () => {
-          setDesignation('All');
-          setPage(1);
-        },
-      });
-    }
-    return chips;
-  }, [department, designation]);
-
-  function clearAll() {
-    setDepartment('All');
-    setDesignation('All');
-    setSearch('');
-    setPage(1);
-  }
+  const {
+    employees,
+    totalCount,
+    loading,
+    error,
+    designations,
+    pendingCount,
+    search,
+    setSearch,
+    department,
+    designation,
+    setDepartment,
+    setDesignation,
+    activeFilters,
+    clearAllFilters,
+    page,
+    pageSize,
+    setPage,
+    refetch,
+  } = useEmployeesList();
 
   return (
     <AppShell pendingCount={pendingCount ?? undefined}>
       <PageHeader
         title="Employees"
         description={
-          list.status === 'succeeded'
-            ? `${list.total} employees across the directory.`
+          !loading && totalCount > 0
+            ? `${totalCount} employees across the directory.`
             : 'Search and filter the company directory.'
         }
         action={
@@ -133,10 +66,7 @@ export default function EmployeesPage() {
       <div className="flex flex-col md:flex-row gap-3 mb-3">
         <SearchInput
           value={search}
-          onChange={(v) => {
-            setSearch(v);
-            setPage(1);
-          }}
+          onChange={setSearch}
           placeholder="Search name or email…"
           ariaLabel="Search employees"
           className="flex-1"
@@ -146,19 +76,13 @@ export default function EmployeesPage() {
             label="Department"
             value={department}
             options={DEPARTMENTS}
-            onChange={(v) => {
-              setDepartment(v as Department | 'All');
-              setPage(1);
-            }}
+            onChange={(v) => setDepartment(v as Department | 'All')}
           />
           <SelectFilter
             label="Designation"
             value={designation}
             options={['All', ...designations]}
-            onChange={(v) => {
-              setDesignation(v);
-              setPage(1);
-            }}
+             onChange={(v) => setDesignation(v as Designation | 'All')}
           />
         </div>
       </div>
@@ -183,7 +107,7 @@ export default function EmployeesPage() {
           ))}
           <button
             type="button"
-            onClick={clearAll}
+            onClick={clearAllFilters}
             className="text-slate-500 hover:text-slate-700 underline"
           >
             Clear filters
@@ -203,7 +127,7 @@ export default function EmployeesPage() {
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         {loading ? (
           <SkeletonRows />
-        ) : list.items.length === 0 ? (
+        ) : employees.length === 0 ? (
           <div className="p-2">
             <EmptyState
               Icon={Users}
@@ -213,7 +137,7 @@ export default function EmployeesPage() {
                 activeFilters.length > 0 ? (
                   <button
                     type="button"
-                    onClick={clearAll}
+                    onClick={clearAllFilters}
                     className="text-sm text-brand-600 hover:underline"
                   >
                     Clear filters
@@ -241,7 +165,7 @@ export default function EmployeesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {list.items.map((emp) => {
+                {employees.map((emp) => {
                   const initials = getInitials(emp.firstName, emp.lastName);
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50">
@@ -284,9 +208,9 @@ export default function EmployeesPage() {
               </tbody>
             </table>
             <Pagination
-              page={list.page}
-              total={list.total}
-              pageSize={list.pageSize}
+              page={page}
+              total={totalCount}
+              pageSize={pageSize}
               onPageChange={setPage}
               itemLabel="employees"
             />
