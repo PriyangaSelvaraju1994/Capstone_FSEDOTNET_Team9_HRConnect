@@ -116,7 +116,7 @@ public class EmployeeServiceTests
         _context.Users.AddRange(user1, user2);
         _context.Employees.AddRange(employee1, employee2);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = (await _service.GetAllEmployeesAsync()).ToList();
@@ -160,7 +160,7 @@ public class EmployeeServiceTests
         _context.Users.Add(user);
         _context.Employees.Add(employee);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await _service.GetEmployeeByIdAsync(employee.Id);
@@ -194,7 +194,7 @@ public class EmployeeServiceTests
         var user = CreateUser();
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var request = CreateEmployeeRequest();
 
@@ -235,7 +235,7 @@ public class EmployeeServiceTests
 
         _context.Employees.Add(existingEmployee);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var request = CreateEmployeeRequest(
             designation: "Senior Software Engineer",
@@ -259,7 +259,7 @@ public class EmployeeServiceTests
 
         _context.Employees.Add(employee);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var request = CreateUpdateEmployeeRequest();
 
@@ -303,7 +303,7 @@ public class EmployeeServiceTests
         // Arrange
         var employee = CreateEmployee();
         _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
         var leaveRequest = new LeaveRequest
         {
             EmployeeId = employee.Id,
@@ -325,7 +325,7 @@ public class EmployeeServiceTests
         _context.LeaveRequests.Add(leaveRequest);
         _context.LeaveBalances.Add(leaveBalance);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
         // Act
         await _service.DeleteEmployeeAsync(employee.Id);
         // Assert
