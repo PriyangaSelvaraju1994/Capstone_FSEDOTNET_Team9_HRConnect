@@ -6,6 +6,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  joiningDate?: string;
   department?: Department;
   designation?: Designation;
   isAdmin: boolean;
@@ -20,6 +21,7 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
+  joiningDate: string;
   department: Department;
   designation: Designation;
 }
