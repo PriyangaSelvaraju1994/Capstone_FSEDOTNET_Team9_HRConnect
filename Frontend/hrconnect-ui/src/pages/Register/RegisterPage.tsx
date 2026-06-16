@@ -29,6 +29,7 @@ const DESIGNATIONS = [
 const schema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
+  joiningDate: z.string().min(1, 'Joining date is required'),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -43,6 +44,10 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
@@ -59,6 +64,7 @@ export default function RegisterPage() {
     defaultValues: {
       firstName: '',
       lastName: '',
+        joiningDate: today(),
       email: '',
       password: '',
       department: 'IT',
@@ -168,6 +174,25 @@ export default function RegisterPage() {
               </div>
 
               <div>
+                  <label htmlFor="joiningDate" className="block text-sm font-medium mb-1">
+                    Joining date
+                  </label>
+                  <input
+                    id="joiningDate"
+                    type="date"
+                    aria-invalid={Boolean(errors.joiningDate)}
+                    aria-describedby={errors.joiningDate ? 'joiningDate-error' : undefined}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.joiningDate ? 'border-rose-400' : 'border-slate-300'}`}
+                    {...register('joiningDate')}
+                  />
+                  {errors.joiningDate && (
+                    <p id="joiningDate-error" className="text-xs text-rose-600 mt-1">
+                      {errors.joiningDate.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1">
                   Work email
                 </label>

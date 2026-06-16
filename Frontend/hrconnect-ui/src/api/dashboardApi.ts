@@ -11,9 +11,9 @@ import type {
 } from '../types/leave';
 
 export const dashboardApi = {
-  getEmployeeDashboard: (userId: number): Promise<EmployeeDashboardData> =>
+  getEmployeeDashboard: (userId: number): Promise<EmployeeDashboardData[]> =>
     http
-      .get<EmployeeDashboardData>(`/employees/${userId}/dashboard`)
+      .get<EmployeeDashboardData[]>(`/leaves/leavebalances/${userId}`)
       .then((r) => r.data),
 
   getHrDashboard: (): Promise<HrDashboardData> =>
