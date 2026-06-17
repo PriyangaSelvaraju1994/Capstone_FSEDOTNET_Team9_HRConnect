@@ -8,17 +8,17 @@ import type {
   Employee,
   EmployeeFormValues,
   EmployeeListParams,
-  EmployeeListResult,
+  EmployeeResult,
 } from '../types/employee';
 
 export const employeesApi = {
-  list: (params: EmployeeListParams = {}): Promise<EmployeeListResult> =>
+  list: (_params: EmployeeListParams = {}): Promise<EmployeeResult[]> =>
     http
-      .get<EmployeeListResult>('/employees', { params })
+      .get<EmployeeResult[]>('/employees')
       .then((r) => r.data),
 
-  getById: (id: number): Promise<Employee> =>
-    http.get<Employee>(`/employees/${id}`).then((r) => r.data),
+  getById: (id: number): Promise<EmployeeResult> =>
+    http.get<EmployeeResult>(`/employees/${id}`).then((r) => r.data),
 
   listDesignations: (): Promise<string[]> =>
     http.get<string[]>('/employees/designations').then((r) => r.data),

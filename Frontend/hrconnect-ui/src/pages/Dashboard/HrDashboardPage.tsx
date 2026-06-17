@@ -23,28 +23,34 @@ import { ShortcutLink } from '../../components/ShortcutLink';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchHrDashboard,
+  fetchHrDashboardRecent,
   selectHrDashboard,
+  selectHrDashboardRecent,
 } from '../../store/slices/dashboardSlice';
-import type { HrKpis } from '../../types/leave';
 import { range } from '../../utils/array';
 import { formatLongDate } from '../../utils/formatDate';
+import { HrDashboardSummary } from '@/types/leave';
 
 export default function HrDashboardPage() {
   const dispatch = useAppDispatch();
   const slot = useAppSelector(selectHrDashboard);
+  const recentSlot = useAppSelector(selectHrDashboardRecent);
   const data = slot.data;
+  const recentData = recentSlot.data;
   const loading = slot.status === 'loading' && !data;
   const error = slot.status === 'failed' ? slot.error : null;
 
   useEffect(() => {
     void dispatch(fetchHrDashboard());
+    void dispatch(fetchHrDashboardRecent());
   }, [dispatch]);
 
   function refetch() {
     void dispatch(fetchHrDashboard());
+    void dispatch(fetchHrDashboardRecent());
   }
 
-  const pendingCount = data?.kpis.pendingCount;
+  const pendingCount = data?.pendingCount;
 
   return (
     <AppShell pendingCount={pendingCount} hasUnreadNotifications>
@@ -80,7 +86,7 @@ export default function HrDashboardPage() {
           {loading || !data ? (
             range(4).map((i) => <KpiTileSkeleton key={i} />)
           ) : (
-            <KpiGrid kpis={data.kpis} />
+            <KpiGrid summary={data} />
           )}
         </div>
       </section>
@@ -102,7 +108,7 @@ export default function HrDashboardPage() {
                   <ActivityListItemSkeleton key={i} />
                 ))}
               </ul>
-            ) : !data || data.recentActivity.length === 0 ? (
+            ) : !recentData || recentData.length === 0 ? (
               <EmptyState
                 Icon={Inbox}
                 title="No activity yet"
@@ -110,7 +116,7 @@ export default function HrDashboardPage() {
               />
             ) : (
               <ul className="divide-y divide-slate-100">
-                {data.recentActivity.map((a) => (
+                {recentData.map((a) => (
                   <ActivityListItem key={a.id} entry={a} />
                 ))}
               </ul>
@@ -136,10 +142,10 @@ export default function HrDashboardPage() {
 }
 
 interface KpiGridProps {
-  kpis: HrKpis;
+  summary: HrDashboardSummary;
 }
 
-function KpiGrid({ kpis }: KpiGridProps) {
+function KpiGrid({ summary }: KpiGridProps) {
   return (
     <>
       <KpiTile
@@ -147,14 +153,14 @@ function KpiGrid({ kpis }: KpiGridProps) {
         Icon={Clock}
         iconBg="bg-amber-100"
         iconText="text-amber-700"
-        value={kpis.pendingCount}
+        value={summary.pendingCount}
         label="Pending requests"
       />
       <KpiTile
         Icon={CheckCircle2}
         iconBg="bg-emerald-100"
         iconText="text-emerald-700"
-        value={kpis.approvedThisMonth}
+        value={summary.approvedThisMonth}
         label="Approved this month"
       />
       <KpiTile
@@ -162,14 +168,14 @@ function KpiGrid({ kpis }: KpiGridProps) {
         Icon={Users}
         iconBg="bg-brand-100"
         iconText="text-brand-700"
-        value={kpis.activeEmployees}
+        value={summary.activeEmployees}
         label="Active employees"
       />
       <KpiTile
         Icon={UserCheck}
         iconBg="bg-sky-100"
         iconText="text-sky-700"
-        value={kpis.onLeaveToday}
+        value={summary.onLeaveToday}
         label="On leave today"
       />
     </>

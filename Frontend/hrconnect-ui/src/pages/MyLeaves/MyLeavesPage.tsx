@@ -14,7 +14,7 @@ import { LEAVE_STATUS_FILTERS } from '../../types/leave';
 import { range } from '../../utils/array';
 import { formatDateRange } from '../../utils/formatDate';
 
-function calculateLeaveDays(startDate: Date, endDate: Date): number {
+function calculateLeaveDays(startDate: string, endDate: string): number {
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffTime = Math.abs(end.getTime() - start.getTime());

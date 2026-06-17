@@ -1,13 +1,10 @@
 import { useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-  fetchDesignations,
   fetchEmployees,
-  selectDesignations,
   selectEmployeeList,
 } from '../store/slices/employeesSlice';
 import {
-  fetchPendingCount,
   selectPendingCount,
 } from '../store/slices/leavesSlice';
 import type { Department, Designation } from '../types/auth';
@@ -40,7 +37,6 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
 
   const dispatch = useAppDispatch();
   const list = useAppSelector(selectEmployeeList);
-  const designations = useAppSelector(selectDesignations);
   const pendingCount = useAppSelector(selectPendingCount);
 
   const loading = list.status === 'loading';
@@ -48,8 +44,8 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
 
   // One-time: warm filter options and badge
   useEffect(() => {
-    void dispatch(fetchDesignations());
-    void dispatch(fetchPendingCount());
+    // void dispatch(fetchDesignations());
+    // void dispatch(fetchPendingCount());
   }, [dispatch]);
 
   // Fetch directory whenever search/filter/page changes
@@ -131,7 +127,6 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     totalCount: list.total,
     loading,
     error,
-    designations: designations,
     pendingCount,
 
     // Search
