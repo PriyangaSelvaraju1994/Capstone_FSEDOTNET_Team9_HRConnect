@@ -1,12 +1,8 @@
 using HRConnect.API.DTOs.Auth;
 using HRConnect.API.Services.Interfaces;
-using HRConnect.API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HRConnect.API.Data;
 using HRConnect.API.DTOs;
-using HRConnect.API.DTOs.Employee;
 using BCrypt.Net;
 using System.Security.Claims;
 
@@ -16,52 +12,26 @@ namespace HRConnect.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
+    private readonly IAuthService _authService;
     private readonly IJwtService _jwtService;
-    private readonly ApplicationDbContext _context;
-    private readonly IEmployeeService _employeeService;
-    private readonly ITokenRevocationService _tokenRevocationService;
 
     public AuthController(
-        IJwtService jwtService,
-        ApplicationDbContext context,
-        IEmployeeService employeeService,
-        ITokenRevocationService tokenRevocationService)
+        IAuthService authService,
+        IJwtService jwtService)
     {
+        _authService = authService;
         _jwtService = jwtService;
-        _context = context;
-        _employeeService = employeeService;
-        _tokenRevocationService = tokenRevocationService;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequestDto request)
     {
-        var userExists = _context.Users.Any(u => u.Email == request.Email);
-        if (userExists)
+        if (await _authService.EmailExistsAsync(request.Email))
         {
             return BadRequest("User already exists");
         }
 
-        var user = new User
-        {
-            FullName = request.FullName,
-            Email = request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            IsAdmin = false
-        };
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        var employee = new CreateEmployeeDto
-        {
-            UserId = user.Id,
-            Department = request.Department,
-            Designation = request.Designation,
-            JoiningDate = request.DateOfJoining
-        };
-
-        await _employeeService.CreateEmployeeAsync(employee);
+        await _authService.RegisterUserAsync(request);
 
         return Ok("User registered successfully");
     }
@@ -69,15 +39,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequestDto request)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
-
+        var user = await _authService.ValidateUserAsync(request);
         if (user == null)
-        {
-            return Unauthorized("Invalid credentials");
-        }
-
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             return Unauthorized("Invalid credentials");
         }
@@ -105,22 +68,11 @@ public class AuthController : ControllerBase
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
         var jti = User.FindFirst("jti")?.Value;
 
-        if (!string.IsNullOrEmpty(jti))
-        {
-            _tokenRevocationService.RevokeToken(jti);
-        }
-
         var logoutWrapper = new LogoutResponseWrapperDto
         {
             HttpResponseCode = 200,
             ResultStatus = "success",
-            ResultSet = new LogoutResponseDto
-            {
-                Message = "User logged out successfully. Token has been revoked on the server.",
-                UserId = userId,
-                Email = email,
-                TokenRevoked = !string.IsNullOrEmpty(jti)
-            }
+            ResultSet = _authService.Logout(userId, email, jti)
         };
 
         return Ok(logoutWrapper);
