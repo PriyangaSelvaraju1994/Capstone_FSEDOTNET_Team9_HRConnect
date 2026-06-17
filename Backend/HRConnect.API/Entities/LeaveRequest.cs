@@ -15,6 +15,10 @@ public class LeaveRequest
     public string Status { get; set; } = string.Empty;
 
     public string Reason { get; set; } = string.Empty;
+    public DateTime? CreatedDate { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedDate { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation Property
     public Employee? Employee { get; set; }

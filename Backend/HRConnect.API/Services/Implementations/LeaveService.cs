@@ -1,5 +1,6 @@
 using HRConnect.API.Data;
 using HRConnect.API.DTOs;
+using HRConnect.API.DTOs.Dashboard;
 using HRConnect.API.Entities;
 using HRConnect.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;

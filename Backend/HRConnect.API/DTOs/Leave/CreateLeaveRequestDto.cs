@@ -11,4 +11,12 @@ public class CreateLeaveRequestDto
     public DateTime EndDate { get; set; }
 
     public required string Reason { get; set; }
+        // Audit Fields
+    public DateTime? CreatedDate { get; set; }
+
+    public string CreatedBy { get; set; } = string.Empty;
+
+    public DateTime? UpdatedDate { get; set; }
+
+    public string? UpdatedBy { get; set; }
 }

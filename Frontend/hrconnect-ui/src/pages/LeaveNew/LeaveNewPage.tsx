@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertCircle, Calendar, Loader2, Send } from 'lucide-react';
+import { AlertCircle, Loader2, Send } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { AppShell } from '../../components/AppShell';
 import { BalancePreviewCard } from '../../components/BalancePreviewCard';
 import { Breadcrumb } from '../../components/Breadcrumb';
@@ -18,15 +20,25 @@ const REASON_MAX = 500;
 const schema = z
   .object({
     type: z.enum(['Earned', 'Sick', 'Casual', 'CompOff']),
-    startDate: z.string().min(1, 'Pick a start date'),
-    endDate: z.string().min(1, 'Pick an end date'),
+    startDate: z
+      .string()
+      .min(1, 'Pick a start date')
+      .refine((value) => !isWeekend(new Date(`${value}T00:00:00`)), {
+        message: 'Start date cannot be a weekend',
+      }),
+    endDate: z
+      .string()
+      .min(1, 'Pick an end date')
+      .refine((value) => !isWeekend(new Date(`${value}T00:00:00`)), {
+        message: 'End date cannot be a weekend',
+      }),
     reason: z
       .string()
       .max(REASON_MAX, `Keep it under ${REASON_MAX} characters`)
       .optional(),
   })
   .refine(
-    (v) => new Date(v.endDate).getTime() >= new Date(v.startDate).getTime(),
+    (value) => new Date(value.endDate).getTime() >= new Date(value.startDate).getTime(),
     {
       path: ['endDate'],
       message: 'End date must be on or after the start date',
@@ -37,6 +49,18 @@ type FormValues = z.infer<typeof schema>;
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function toInputDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isWeekend(date: Date): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6;
 }
 
 export default function LeaveNewPage() {
@@ -70,6 +94,9 @@ export default function LeaveNewPage() {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const reason = watch('reason') ?? '';
+
+  const selectedStartDate = startDate ? new Date(`${startDate}T00:00:00`) : null;
+  const selectedEndDate = endDate ? new Date(`${endDate}T00:00:00`) : null;
 
   const preview = useMemo(
     () => computePreview(type, startDate, endDate),
@@ -111,7 +138,7 @@ export default function LeaveNewPage() {
             <form onSubmit={onSubmit} className="space-y-5" noValidate>
               <LeaveTypeDropdown
                 value={type}
-                onChange={(v: LeaveType) => setValue('type', v, { shouldDirty: true })}
+                onChange={(v: LeaveType) => setValue('type', v, {  shouldDirty: true })}
                 balances={balances ?? undefined}
               />
 
@@ -123,21 +150,19 @@ export default function LeaveNewPage() {
                   >
                     Start date
                   </label>
-                  <div className="relative">
-                    <Calendar
-                      className="w-4 h-4 absolute left-3 top-2.5 text-slate-400"
-                      aria-hidden="true"
-                    />
-                    <input
-                      id="startDate"
-                      type="date"
-                      aria-invalid={Boolean(errors.startDate)}
-                      className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                        errors.startDate
-                          ? 'border-rose-400'
-                          : 'border-slate-300'
-                      }`}
-                      {...register('startDate')}
+                  <div className="rounded-md border border-slate-200 p-3">
+                    <DatePicker
+                      selected={selectedStartDate}
+                      onChange={(date: Date | null) => {
+                        if (date) {
+                          setValue('startDate', toInputDate(date), {
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                      filterDate={(date) => !isWeekend(date)}
+                      dateFormat="yyyy-MM-dd"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
                   {errors.startDate && (
@@ -153,19 +178,19 @@ export default function LeaveNewPage() {
                   >
                     End date
                   </label>
-                  <div className="relative">
-                    <Calendar
-                      className="w-4 h-4 absolute left-3 top-2.5 text-slate-400"
-                      aria-hidden="true"
-                    />
-                    <input
-                      id="endDate"
-                      type="date"
-                      aria-invalid={Boolean(errors.endDate)}
-                      className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                        errors.endDate ? 'border-rose-400' : 'border-slate-300'
-                      }`}
-                      {...register('endDate')}
+                  <div className="rounded-md border border-slate-200 p-3">
+                    <DatePicker
+                      selected={selectedEndDate}
+                      onChange={(date: Date | null) => {
+                        if (date) {
+                          setValue('endDate', toInputDate(date), {
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                      filterDate={(date) => !isWeekend(date)}
+                      dateFormat="yyyy-MM-dd"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
                   {errors.endDate && (
