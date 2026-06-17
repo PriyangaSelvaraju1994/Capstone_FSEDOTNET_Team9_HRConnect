@@ -61,6 +61,7 @@ export default function LoginPage() {
   });
 
   const submitting = status === 'loading';
+  const loginErrorMessage = error?.message || 'Something went wrong. Please try again.';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,7 +102,7 @@ export default function LoginPage() {
                 className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
               >
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-none" aria-hidden="true" />
-                <span>{error.message}</span>
+                <span>{loginErrorMessage}</span>
               </div>
             )}
 

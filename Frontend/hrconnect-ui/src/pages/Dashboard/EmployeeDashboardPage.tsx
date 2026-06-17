@@ -38,7 +38,7 @@ export default function EmployeeDashboardPage() {
         title={
           <span className="inline-flex items-center gap-3">
             <Sun className="w-7 h-7 text-amber-500" aria-hidden="true" />
-            {getGreeting()}, {user?.firstName ?? 'there'}
+            {getGreeting()}, {user?.firstName} {user?.lastName}
           </span>
         }
       />

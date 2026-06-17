@@ -110,7 +110,6 @@ export default function MyLeavesPage() {
                   <th className="text-left font-medium px-5 py-2.5">Dates</th>
                   <th className="text-left font-medium px-5 py-2.5">Days</th>
                   <th className="text-left font-medium px-5 py-2.5">Status</th>
-                  <th className="text-left font-medium px-5 py-2.5">Submitted</th>
                   <th className="text-right font-medium px-5 py-2.5">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -138,9 +137,7 @@ export default function MyLeavesPage() {
                       <td className="px-5 py-3">
                         <StatusBadge status={req.status} />
                       </td>
-                      <td className="px-5 py-3 text-slate-500">
-                        {formatDate(req.submittedAt)}
-                      </td>
+                     
                       <td className="px-5 py-3 text-right">
                         {req.status === 'Pending' ? (
                           <button
