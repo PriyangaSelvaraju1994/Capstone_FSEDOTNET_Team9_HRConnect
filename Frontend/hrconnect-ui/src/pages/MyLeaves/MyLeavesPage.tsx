@@ -12,7 +12,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { useMyLeaves } from '../../hooks/useMyLeaves';
 import { LEAVE_STATUS_FILTERS } from '../../types/leave';
 import { range } from '../../utils/array';
-import { formatDate, formatDateRange } from '../../utils/formatDate';
+import { formatDateRange } from '../../utils/formatDate';
+
+function calculateLeaveDays(startDate: Date, endDate: Date): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include the start date
+}
 
 export default function MyLeavesPage() {
   const { user } = useAuth();
@@ -118,7 +125,7 @@ export default function MyLeavesPage() {
               <tbody className="divide-y divide-slate-100">
                 {leaves.map((req) => {
                   const meta = getLeaveTypeMeta(req.leaveType);
-                  const TypeIcon = meta.Icon;
+                  const TypeIcon = meta.Icon;                 
                   return (
                     <tr key={req.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3">
@@ -133,7 +140,7 @@ export default function MyLeavesPage() {
                       <td className="px-5 py-3 text-slate-700">
                         {formatDateRange(req.startDate, req.endDate)}
                       </td>
-                      <td className="px-5 py-3">{req.days}</td>
+                      <td className="px-5 py-3">{calculateLeaveDays(req.startDate, req.endDate)}</td>
                       <td className="px-5 py-3">
                         <StatusBadge status={req.status} />
                       </td>
