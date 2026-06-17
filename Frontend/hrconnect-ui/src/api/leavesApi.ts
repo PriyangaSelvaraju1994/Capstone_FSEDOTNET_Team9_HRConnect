@@ -52,7 +52,7 @@ export const leavesApi = {
 
   cancel: (id: string): Promise<LeaveRequest> =>
     http
-      .put<LeaveRequest>(`/leaves/${id}/status`, { status: 'Cancelled' })
+      .post<LeaveRequest>(`/leaves/cancelleave/${id}`)
       .then((r) => r.data),
 
   approve: (id: string): Promise<LeaveRequest> =>
