@@ -30,7 +30,7 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 bg-slate-50">
       <div className="text-xs text-slate-500" aria-live="polite">
-        Showing {first}\{last} of {total} {itemLabel}
+        Showing {first}-{last} of {total} {itemLabel}
       </div>
       <div className="flex items-center gap-1">
         <button
