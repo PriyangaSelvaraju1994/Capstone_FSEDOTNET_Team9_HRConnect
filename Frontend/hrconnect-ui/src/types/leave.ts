@@ -93,7 +93,7 @@ export interface HrActivityEntry {
   byMe?: boolean;
 }
 
-export interface HrKpis {
+export interface HrDashboardSummary {
   pendingCount: number;
   approvedThisMonth: number;
   activeEmployees: number;
@@ -101,6 +101,6 @@ export interface HrKpis {
 }
 
 export interface HrDashboardData {
-  kpis: HrKpis;
+  summary: HrDashboardSummary;
   recentActivity: HrActivityEntry[];
 }

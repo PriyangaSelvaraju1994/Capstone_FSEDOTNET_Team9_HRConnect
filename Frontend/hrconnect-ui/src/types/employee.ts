@@ -1,4 +1,4 @@
-import type { Department } from './auth';
+import type { Department, Designation } from './auth';
 
 export type EmployeeRole = 'Employee' | 'HR Admin';
 
@@ -42,4 +42,17 @@ export interface EmployeeFormValues {
   designation: string;
   joiningDate: string;
   role: EmployeeRole;
+}
+
+export interface EmployeeResult {
+  id: number;
+  employeeCode: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  department: Department;
+  designation: Designation;
+  joiningDate: string; // ISO date
+  managerId?: number;
+  managerName?: string;
 }

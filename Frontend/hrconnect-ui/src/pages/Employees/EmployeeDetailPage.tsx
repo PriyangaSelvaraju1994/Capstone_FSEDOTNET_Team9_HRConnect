@@ -43,7 +43,7 @@ export default function EmployeeDetailPage() {
       <Breadcrumb
         items={[
           { label: 'Employees', to: '/employees' },
-          { label: emp ? `${emp.firstName} ${emp.lastName}` : 'Loading…' },
+          { label: emp ? emp.fullName : 'Loading…' },
         ]}
       />
 
@@ -69,15 +69,15 @@ export default function EmployeeDetailPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Avatar
-                initials={getInitials(emp.firstName, emp.lastName)}
+                initials={getInitials(emp.fullName ?? '', '') || '··'}
                 size={12}
                 className={getAvatarClassName(
-                  getInitials(emp.firstName, emp.lastName),
+                  getInitials(emp.fullName ?? '', '') || '··',
                 )}
               />
               <div>
                 <h1 className="text-xl font-semibold">
-                  {emp.firstName} {emp.lastName}
+                  {emp.fullName}
                 </h1>
                 <p className="text-slate-600 text-sm flex items-center gap-3 mt-1 flex-wrap">
                   <span className="inline-flex items-center gap-1">
@@ -165,12 +165,12 @@ export default function EmployeeDetailPage() {
             <div className="bg-white border border-slate-200 rounded-lg p-5">
               <SectionHeading>Employment</SectionHeading>
               <dl className="space-y-2 text-sm">
-                <Row label="Employee ID" value={emp.employeeCode} />
+                <Row label="Employee ID" value={`EM${emp.id.toString()}`} />
                 <Row label="Joined" value={formatDate(emp.joiningDate)} />
                 {emp.managerName && (
                   <Row label="Manager" value={emp.managerName} />
                 )}
-                <Row label="Role" value={emp.role} />
+                <Row label="Designation" value={emp.designation} />
               </dl>
             </div>
           )}

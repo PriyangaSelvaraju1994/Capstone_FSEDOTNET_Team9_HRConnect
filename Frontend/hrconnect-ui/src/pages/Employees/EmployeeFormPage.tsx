@@ -28,10 +28,8 @@ import {
   selectPendingCount,
 } from '../../store/slices/leavesSlice';
 import type { Department } from '../../types/auth';
-import type { EmployeeRole } from '../../types/employee';
 
 const DEPARTMENTS: Department[] = ['IT', 'QE', 'Sales', 'HR'];
-const ROLES: EmployeeRole[] = ['Employee', 'HR Admin'];
 
 const schema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
@@ -85,7 +83,6 @@ export default function EmployeeFormPage({ mode }: Props) {
       department: 'IT',
       designation: '',
       joiningDate: new Date().toISOString().slice(0, 10),
-      role: 'Employee',
     },
   });
 
@@ -93,13 +90,12 @@ export default function EmployeeFormPage({ mode }: Props) {
   useEffect(() => {
     if (existing) {
       reset({
-        firstName: existing.firstName,
-        lastName: existing.lastName,
+        firstName: '',
+        lastName: '',
         email: existing.email,
         department: existing.department,
         designation: existing.designation,
         joiningDate: existing.joiningDate.slice(0, 10),
-        role: existing.role,
       });
     }
   }, [existing, reset]);
@@ -271,7 +267,7 @@ export default function EmployeeFormPage({ mode }: Props) {
                 error={errors.joiningDate?.message}
                 {...register('joiningDate')}
               />
-              <fieldset>
+              {/* <fieldset>
                 <legend className="block text-sm font-medium mb-1">
                   Role
                 </legend>
@@ -290,7 +286,7 @@ export default function EmployeeFormPage({ mode }: Props) {
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset> */}
             </div>
           </section>
 
