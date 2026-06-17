@@ -52,7 +52,7 @@ const passwordSchema = z
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
-  const userId = user?.id ?? '';
+  const userId = user?.id ?? 0;
 
   const {
     employee: emp,
