@@ -7,7 +7,7 @@ namespace HRConnect.API.Controllers;
 
 [ApiController]
 [Route("api/employees")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class EmployeeController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
