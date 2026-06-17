@@ -178,14 +178,12 @@ export default function EmployeeFormPage({ mode }: Props) {
               <TextField
                 id="firstName"
                 label={<>First name <span className="text-rose-600">*</span></>}
-                placeholder="Anita"
                 error={errors.firstName?.message}
                 {...register('firstName')}
               />
               <TextField
                 id="lastName"
                 label={<>Last name <span className="text-rose-600">*</span></>}
-                placeholder="Nair"
                 error={errors.lastName?.message}
                 {...register('lastName')}
               />
@@ -207,7 +205,7 @@ export default function EmployeeFormPage({ mode }: Props) {
                   type="email"
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'email-error' : undefined}
-                  placeholder="anita@company.com"
+                  placeholder="name@apexon.com"
                   className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                     errors.email ? 'border-rose-400' : 'border-slate-300'
                   }`}
