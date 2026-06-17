@@ -66,7 +66,7 @@ public class LeaveController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("cancelleave/{Id}")]
+    [HttpPost("cancelleave/{Id}")]
     public async Task<IActionResult> CancelLeave(
         int Id)
     {
