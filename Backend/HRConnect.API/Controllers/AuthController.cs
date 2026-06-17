@@ -78,6 +78,6 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public IActionResult Logout()
     {      
-        return Ok(" User logged out successfully");
+        return Ok("User logged out successfully");
     }
 }
