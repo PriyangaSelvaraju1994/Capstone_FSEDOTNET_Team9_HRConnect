@@ -1,4 +1,5 @@
 using HRConnect.API.DTOs;
+using HRConnect.API.DTOs.Dashboard;
 namespace HRConnect.API.Services.Interfaces;
 
 public interface ILeaveService
@@ -12,4 +13,8 @@ public interface ILeaveService
         UpdateLeaveStatusDto request);
 
     Task<List<LeaveBalanceDto>> GetLeaveBalanceAsync(int employeeId);
+
+    Task<List<LeaveRequestDto>> GetAllLeavesAsync();
+
+    Task<string> CancelLeaveAsync(int leaveId);
 }

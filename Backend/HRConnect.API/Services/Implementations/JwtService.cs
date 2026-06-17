@@ -1,4 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
+using HRConnect.API.Services.Interfaces;
+using HRConnect.API.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -12,11 +14,15 @@ public class JwtService : IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(string email)
+    public string GenerateToken(User user)
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.Email, email)
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.FullName),
+            new Claim(
+            ClaimTypes.Role,
+            user.IsAdmin ? "Admin" : "Employee")
         };
 
         var key = new SymmetricSecurityKey(

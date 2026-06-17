@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37216.2
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRConnect.API", "HRConnect.API.csproj", "{00F8FC10-890C-917A-010F-F5F3A063EDB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRConnect.Tests", "..\HRConnect.Tests\HRConnect.Tests.csproj", "{8218E97B-0A29-4476-8125-A632B98E95B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00F8FC10-890C-917A-010F-F5F3A063EDB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00F8FC10-890C-917A-010F-F5F3A063EDB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00F8FC10-890C-917A-010F-F5F3A063EDB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00F8FC10-890C-917A-010F-F5F3A063EDB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8218E97B-0A29-4476-8125-A632B98E95B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8218E97B-0A29-4476-8125-A632B98E95B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8218E97B-0A29-4476-8125-A632B98E95B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8218E97B-0A29-4476-8125-A632B98E95B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1FC36D83-E4FE-4071-94B6-615587D8EDFA}
+	EndGlobalSection
+EndGlobal

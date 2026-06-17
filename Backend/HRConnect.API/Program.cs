@@ -18,6 +18,7 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<DefaultLeaveBalancesForNewEmployee>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services
@@ -56,7 +57,9 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:5173",
-                "https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net"
+                "https://hrconnect-api-priya-buccf7fwbmgnfecu.centralindia-01.azurewebsites.net",
+                "https://polite-grass-0ed920b00.7.azurestaticapps.net",
+                "https://polite-grass-0ed920b00-12.eastasia.7.azurestaticapps.net"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
