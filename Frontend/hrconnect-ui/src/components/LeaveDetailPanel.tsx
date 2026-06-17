@@ -6,6 +6,7 @@ import { getAvatarClassName } from '../utils/avatarColor';
 import { Avatar } from './Avatar';
 import { BalancePreviewCard } from './BalancePreviewCard';
 import { getLeaveTypeMeta } from './leaveTypeMeta';
+import { getInitials } from '../utils/user';
 
 interface Props {
   request: LeaveRequest;
@@ -41,6 +42,8 @@ export function LeaveDetailPanel({
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const initials = getInitials(request.employeeName ?? '', '') || '··';
+
   return (
     <aside
       role="dialog"
@@ -62,9 +65,9 @@ export function LeaveDetailPanel({
       <div className="p-5 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 mb-5">
           <Avatar
-            initials={request.employeeInitials}
+            initials={initials}
             size={12}
-            className={getAvatarClassName(request.employeeInitials)}
+            className={getAvatarClassName(initials)}
           />
           <div>
             <div className="font-semibold">{request.employeeName}</div>
