@@ -7,7 +7,7 @@ namespace HRConnect.API.Controllers;
 
 [ApiController]
 [Route("api/employees")]
-//[Authorize] Will Enable Authorization once Auth is implemented
+[Authorize(Roles = "Admin")]
 public class EmployeeController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
