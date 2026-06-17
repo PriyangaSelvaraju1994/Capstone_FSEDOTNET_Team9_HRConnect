@@ -1,4 +1,5 @@
 using HRConnect.API.DTOs;
+using HRConnect.API.DTOs.Dashboard;
 namespace HRConnect.API.Services.Interfaces;
 
 public interface ILeaveService
