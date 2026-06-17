@@ -1,5 +1,6 @@
 using HRConnect.API.Data;
 using HRConnect.API.DTOs;
+using HRConnect.API.DTOs.Dashboard;
 using HRConnect.API.Entities;
 using HRConnect.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -190,22 +191,37 @@ public class LeaveService : ILeaveService
     .ThenInclude(e => e.User)
     .ToListAsync();
         var result = leaves.Select(l => new LeaveRequestDto
-{
-    Id = l.Id,
-    EmployeeId = l.EmployeeId,
-    EmployeeName = l.Employee.User.FullName,
-    LeaveType = l.LeaveType.ToString(),
-    StartDate = l.StartDate,
-    EndDate = l.EndDate,
-    Status = l.Status.ToString(),
-    Reason = l.Reason
-}).ToList();
+            {
+                Id = l.Id,
+                EmployeeId = l.EmployeeId,
+                EmployeeName = l.Employee.User.FullName,
+                LeaveType = l.LeaveType.ToString(),
+                StartDate = l.StartDate,
+                EndDate = l.EndDate,
+                Status = l.Status.ToString(),
+                Reason = l.Reason
+            }).ToList();
 
 //sort by status pending first, then by start date descending
         result = result.OrderBy(l => l.Status)
              .ThenByDescending(l => l.StartDate)
              .ToList();
         return result;
+    }
+
+    public async Task<string> CancelLeaveAsync(int leaveId)
+    {
+        var leave = await _context.LeaveRequests
+            .FirstOrDefaultAsync(l => l.Id == leaveId);
+
+        if (leave == null)
+            throw new NotFoundException("Leave request not found");
+
+        leave.Status = LeaveStatus.Cancelled.ToString();
+        _context.LeaveRequests.Update(leave);
+        await _context.SaveChangesAsync();
+
+        return "Leave request cancelled successfully";
     }
 
     private int CalculateLeaveDays(DateTime startDate, DateTime endDate)

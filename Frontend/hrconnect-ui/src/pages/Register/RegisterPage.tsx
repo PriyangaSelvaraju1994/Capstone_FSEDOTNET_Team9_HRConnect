@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ClipboardEvent, type KeyboardEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,16 +27,31 @@ const DESIGNATIONS = [
 ] as const satisfies readonly Designation[];
 
 const schema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'First name is required')
+    .max(50, 'First name must be at most 50 characters')
+    .regex(/^[A-Za-z]+$/, 'First name can only contain letters'),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required')
+    .max(50, 'Last name must be at most 50 characters')
+    .regex(/^[A-Za-z]+$/, 'Last name can only contain letters'),
   joiningDate: z.string().min(1, 'Joining date is required'),
   email: z
     .string()
     .min(1, 'Email is required')
-    .email('Enter a valid email like name@company.com'),
+    .email('Enter a valid email like name@apexon.com')
+    .refine(
+      (value) => value.toLowerCase().endsWith('@apexon.com'),
+      'Email must end with @apexon.com',
+    ),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
+    .max(64, 'Password must be at most 64 characters')
     .regex(/[A-Z]/, 'Add at least one uppercase letter')
     .regex(/[0-9]/, 'Add at least one digit'),
   department: z.enum(DEPARTMENTS),
@@ -47,6 +62,39 @@ type FormValues = z.infer<typeof schema>;
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+const allowedNameKeys = [
+  'Backspace',
+  'Delete',
+  'Tab',
+  'ArrowLeft',
+  'ArrowRight',
+  'Home',
+  'End',
+  'Escape',
+  'Enter',
+];
+
+function preventNonAlphabetKey(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  const isLetter = /^[A-Za-z]$/.test(event.key);
+  const isAllowedKey = allowedNameKeys.includes(event.key);
+
+  if (!isLetter && !isAllowedKey) {
+    event.preventDefault();
+  }
+}
+
+function preventNonAlphabetPaste(event: ClipboardEvent<HTMLInputElement>) {
+  const pastedText = event.clipboardData.getData('text');
+
+  if (!/^[A-Za-z]*$/.test(pastedText)) {
+    event.preventDefault();
+  }
 }
 
 export default function RegisterPage() {
@@ -140,6 +188,9 @@ export default function RegisterPage() {
                   <input
                     id="firstName"
                     autoComplete="given-name"
+                    maxLength={50}
+                    onKeyDown={preventNonAlphabetKey}
+                    onPaste={preventNonAlphabetPaste}
                     aria-invalid={Boolean(errors.firstName)}
                     aria-describedby={errors.firstName ? 'firstName-error' : undefined}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.firstName ? 'border-rose-400' : 'border-slate-300'
@@ -159,6 +210,9 @@ export default function RegisterPage() {
                   <input
                     id="lastName"
                     autoComplete="family-name"
+                    maxLength={50}
+                    onKeyDown={preventNonAlphabetKey}
+                    onPaste={preventNonAlphabetPaste}
                     aria-invalid={Boolean(errors.lastName)}
                     aria-describedby={errors.lastName ? 'lastName-error' : undefined}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.lastName ? 'border-rose-400' : 'border-slate-300'
@@ -180,6 +234,7 @@ export default function RegisterPage() {
                   <input
                     id="joiningDate"
                     type="date"
+                    max={today()}
                     aria-invalid={Boolean(errors.joiningDate)}
                     aria-describedby={errors.joiningDate ? 'joiningDate-error' : undefined}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.joiningDate ? 'border-rose-400' : 'border-slate-300'}`}

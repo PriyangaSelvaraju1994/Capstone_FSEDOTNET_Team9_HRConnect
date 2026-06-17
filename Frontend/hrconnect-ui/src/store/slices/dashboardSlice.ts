@@ -6,7 +6,8 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { dashboardApi } from '../../api/dashboardApi';
 import type {
   EmployeeDashboardData,
-  HrDashboardData,
+  HrActivityEntry,
+  HrDashboardSummary,
 } from '../../types/leave';
 import { toMessage, type AsyncStatus } from '../asyncStatus';
 
@@ -20,12 +21,14 @@ interface Slot<T> {
 
 export interface DashboardState {
   employee: Slot<EmployeeDashboardData[]> & { forUserId: number | null };
-  hr: Slot<HrDashboardData>;
+  hr: Slot<HrDashboardSummary>;
+  hrRecent: Slot<HrActivityEntry[]>;
 }
 
 const initialState: DashboardState = {
   employee: { data: null, status: 'idle', error: null, forUserId: null },
   hr: { data: null, status: 'idle', error: null },
+  hrRecent: { data: null, status: 'idle', error: null },
 };
 
 // --- Thunks ----------------------------------------------------------------
@@ -43,7 +46,7 @@ export const fetchEmployeeDashboard = createAsyncThunk<
 });
 
 export const fetchHrDashboard = createAsyncThunk<
-  HrDashboardData,
+  HrDashboardSummary,
   void,
   { rejectValue: string }
 >('dashboard/fetchHr', async (_, { rejectWithValue }) => {
@@ -51,6 +54,18 @@ export const fetchHrDashboard = createAsyncThunk<
     return await dashboardApi.getHrDashboard();
   } catch (err) {
     return rejectWithValue(toMessage(err, 'Could not load HR metrics.'));
+  }
+});
+
+export const fetchHrDashboardRecent = createAsyncThunk<
+  HrActivityEntry[],
+  void,
+  { rejectValue: string }
+>('dashboard/fetchHrRecent', async (_, { rejectWithValue }) => {
+  try {
+    return await dashboardApi.getHrDashboardRecent();
+  } catch (err) {
+    return rejectWithValue(toMessage(err, 'Could not load recent HR activities.'));
   }
 });
 
@@ -90,6 +105,20 @@ const dashboardSlice = createSlice({
       .addCase(fetchHrDashboard.rejected, (state, action) => {
         state.hr.status = 'failed';
         state.hr.error = action.payload ?? 'Could not load HR metrics.';
+      })
+
+      // --- HR dashboard recent
+      .addCase(fetchHrDashboardRecent.pending, (state) => {
+        state.hrRecent.status = 'loading';
+        state.hrRecent.error = null;
+      })
+      .addCase(fetchHrDashboardRecent.fulfilled, (state, action) => {
+        state.hrRecent.status = 'succeeded';
+        state.hrRecent.data = action.payload;
+      })
+      .addCase(fetchHrDashboardRecent.rejected, (state, action) => {
+        state.hrRecent.status = 'failed';
+        state.hrRecent.error = action.payload ?? 'Could not load recent HR activities.';
       });
   },
 });
@@ -100,5 +129,6 @@ import type { RootState } from '../store';
 
 export const selectEmployeeDashboard = (s: RootState) => s.dashboard.employee;
 export const selectHrDashboard = (s: RootState) => s.dashboard.hr;
+export const selectHrDashboardRecent = (s: RootState) => s.dashboard.hrRecent;
 
 export default dashboardSlice.reducer;

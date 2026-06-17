@@ -22,7 +22,7 @@ export const leavesApi = {
     http.get<LeaveRequest>(`/leaves/${id}`).then((r) => r.data),
 
   listPending: (): Promise<LeaveRequest[]> =>
-    http.get<LeaveRequest[]>('/leaves/pending').then((r) => r.data),
+    http.get<LeaveRequest[]>('/leaves/all').then((r) => r.data),
 
   getPendingCount: (): Promise<number> =>
     http
@@ -52,7 +52,7 @@ export const leavesApi = {
 
   cancel: (id: string): Promise<LeaveRequest> =>
     http
-      .put<LeaveRequest>(`/leaves/${id}/status`, { status: 'Cancelled' })
+      .post<LeaveRequest>(`/leaves/cancelleave/${id}`)
       .then((r) => r.data),
 
   approve: (id: string): Promise<LeaveRequest> =>

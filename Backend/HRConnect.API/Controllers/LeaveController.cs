@@ -65,6 +65,17 @@ public class LeaveController : ControllerBase
         return Ok(balance);
     }
 
+    [Authorize]
+    [HttpPost("cancelleave/{Id}")]
+    public async Task<IActionResult> CancelLeave(
+        int Id)
+    {
+        var result =
+            await _leaveService.CancelLeaveAsync(Id);
+
+        return Ok(result);
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpGet("all")]
     public async Task<IActionResult> GetAllLeaves()

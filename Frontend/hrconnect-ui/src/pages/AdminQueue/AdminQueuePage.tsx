@@ -12,6 +12,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { formatDateRange, formatRelative } from '../../utils/formatDate';
+import { getInitials } from '../../utils/user';
 
 export default function AdminQueuePage() {
   const {
@@ -127,6 +128,7 @@ export default function AdminQueuePage() {
                   const meta = getLeaveTypeMeta(req.leaveType);
                   const Icon = meta.Icon;
                   const isSelected = req.id === selectedId;
+                  const initials = getInitials(req.employeeName ?? '', '') || '··';
                   return (
                     <tr
                       key={req.id}
@@ -139,10 +141,10 @@ export default function AdminQueuePage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar
-                            initials={req.employeeInitials}
+                            initials={initials}
                             size={7}
                             className={getAvatarClassName(
-                              req.employeeInitials,
+                              initials,
                             )}
                           />
                           <span className="font-medium">

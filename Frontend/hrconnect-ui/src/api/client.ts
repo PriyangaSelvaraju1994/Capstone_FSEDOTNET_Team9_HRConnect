@@ -98,24 +98,87 @@ http.interceptors.response.use(
   },
 );
 
+function getStringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value
+    : undefined;
+}
+
+function collectMessageCandidates(value: unknown): string[] {
+  if (value === null || value === undefined) {
+    return [];
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectMessageCandidates(item));
+  }
+
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const keys = [
+      'message',
+      'msg',
+      'error',
+      'detail',
+      'title',
+      'description',
+      'errorMessage',
+      'responseMessage',
+      'errors',
+      'exceptionMessage',
+    ];
+
+    const directCandidates = keys
+      .map((key) => getStringValue(obj[key]))
+      .filter((item): item is string => Boolean(item));
+
+    const nestedCandidates = Object.values(obj).flatMap((item) =>
+      collectMessageCandidates(item),
+    );
+
+    return [...directCandidates, ...nestedCandidates];
+  }
+
+  return [];
+}
+
+function pickReadableMessage(data: unknown, fallback: string): string {
+  const candidates = collectMessageCandidates(data);
+  const readableMessage = candidates.find(
+    (message) =>
+      !/^Request failed with status code/i.test(message) &&
+      !/^Network Error$/i.test(message) &&
+      !/^Something went wrong/i.test(message),
+  );
+
+  return readableMessage ?? fallback;
+}
+
 function toApiError(error: AxiosError): ApiError {
   const status = error.response?.status ?? 0;
   const data = error.response?.data as unknown;
+  const fallbackMessage =
+    error.message && !/^Request failed with status code/i.test(error.message)
+      ? error.message
+      : 'Something went wrong. Please try again.';
 
-  if (data && typeof data === 'object') {
-    const obj = data as Record<string, unknown>;
-    const message =
-      typeof obj.message === 'string'
-        ? obj.message
-        : typeof obj.title === 'string'
-          ? obj.title
-          : error.message || 'Request failed';
-    const field = typeof obj.field === 'string' ? obj.field : undefined;
-    const code = typeof obj.code === 'string' ? obj.code : undefined;
-    return new ApiError(status, { message, field, code });
-  }
+  const message = pickReadableMessage(data, fallbackMessage);
+  const rawField =
+    data && typeof data === 'object'
+      ? (data as Record<string, unknown>).field
+      : undefined;
+  const rawCode =
+    data && typeof data === 'object'
+      ? (data as Record<string, unknown>).code
+      : undefined;
 
-  return new ApiError(status, {
-    message: error.message || 'Network error. Please try again.',
-  });
+  const field =
+    typeof rawField === 'string' ? rawField : undefined;
+  const code = typeof rawCode === 'string' ? rawCode : undefined;
+
+  return new ApiError(status, { message, field, code });
 }

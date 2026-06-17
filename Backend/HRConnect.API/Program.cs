@@ -19,6 +19,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<DefaultLeaveBalancesForNewEmployee>();
 builder.Services.AddSingleton<ITokenRevocationService, TokenRevocationService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services
