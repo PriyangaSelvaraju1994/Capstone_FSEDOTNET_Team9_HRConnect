@@ -12,6 +12,8 @@ public class Employee
 
     public DateTime JoiningDate { get; set; }
 
+    public bool IsActive { get; set; } // Indicates if the employee is active or not. New employees are inactive by default until HR activates them after verification.
+
     // Navigation Property
     public User? User { get; set; }
 

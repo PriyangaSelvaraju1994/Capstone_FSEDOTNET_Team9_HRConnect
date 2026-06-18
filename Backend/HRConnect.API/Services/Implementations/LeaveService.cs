@@ -199,7 +199,8 @@ public class LeaveService : ILeaveService
                 StartDate = l.StartDate,
                 EndDate = l.EndDate,
                 Status = l.Status.ToString(),
-                Reason = l.Reason
+                Reason = l.Reason,
+                CreatedAt = l.CreatedDate ?? DateTime.MinValue
             }).ToList();
 
 //sort by status pending first, then by start date descending
