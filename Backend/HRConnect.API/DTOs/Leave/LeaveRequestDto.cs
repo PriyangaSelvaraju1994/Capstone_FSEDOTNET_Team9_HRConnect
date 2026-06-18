@@ -17,4 +17,6 @@ public class LeaveRequestDto
     public string Status { get; set; }
 
     public string Reason { get; set; }
+    
+    public DateTime CreatedAt { get; set; }
 }
