@@ -180,4 +180,34 @@ public class EmployeeService : IEmployeeService
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<string> UpdateEmployeePasswordAsync(UpdateEmployeePasswordDto request)
+    {
+        // Checking if Employee ID is valid
+        if (request.EmployeeId <= 0)
+        {
+            throw new BadRequestException("Invalid employee details");
+        }
+
+        // Fetching the employee along with the related user
+        var employee = await _context.Employees
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id == request.EmployeeId);
+
+        if (employee == null || employee.User == null)
+        {
+            throw new NotFoundException($"Employee not found.");
+        }
+
+        // Verifying the current password
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, employee.User.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+        }
+
+        // Hashing the new password and updating it
+        employee.User.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+        return "Password updated successfully.";
+    }
 }

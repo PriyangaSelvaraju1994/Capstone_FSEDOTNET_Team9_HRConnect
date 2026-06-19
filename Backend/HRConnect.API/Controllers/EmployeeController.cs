@@ -51,4 +51,11 @@ public class EmployeeController : ControllerBase
         await _employeeService.DeleteEmployeeAsync(id);
         return NoContent();
     }
+
+    [HttpPut("updatepassword")]
+    public async Task<string> UpdateEmployeePassword(UpdateEmployeePasswordDto request)
+    {
+        await _employeeService.UpdateEmployeePasswordAsync(request);
+        return "Password updated successfully.";
+    }
 }

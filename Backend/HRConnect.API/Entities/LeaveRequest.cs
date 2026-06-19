@@ -19,6 +19,7 @@ public class LeaveRequest
     public string? CreatedBy { get; set; }
     public DateTime? UpdatedDate { get; set; }
     public string? UpdatedBy { get; set; }
+    public bool IsAutoApproved { get; set; } = false;
 
     // Navigation Property
     public Employee? Employee { get; set; }

@@ -35,6 +35,7 @@ public class ExceptionMiddleware
             BadRequestException => StatusCodes.Status400BadRequest,
             ConflictException => StatusCodes.Status409Conflict,
             ValidationException => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status500InternalServerError
         };
 
