@@ -22,7 +22,9 @@ public class JwtService : IJwtService
             new Claim(ClaimTypes.Name, user.FullName),
             new Claim(
             ClaimTypes.Role,
-            user.IsAdmin ? "Admin" : "Employee")
+            user.IsAdmin ? "Admin" : "Employee"),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var key = new SymmetricSecurityKey(
