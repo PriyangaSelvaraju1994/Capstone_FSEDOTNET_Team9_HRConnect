@@ -18,6 +18,7 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<DefaultLeaveBalancesForNewEmployee>();
+builder.Services.AddSingleton<ITokenRevocationService, TokenRevocationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddHostedService<LeaveAutoApprovalService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -42,6 +43,23 @@ builder.Services
                         Encoding.UTF8.GetBytes(
                             builder.Configuration["Jwt:Key"]!))
             };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var revocationService = context.HttpContext.RequestServices
+                    .GetRequiredService<ITokenRevocationService>();
+
+                var jti = context.Principal?.FindFirst("jti")?.Value;
+                if (!string.IsNullOrEmpty(jti) && revocationService.IsTokenRevoked(jti))
+                {
+                    context.Fail("Token has been revoked.");
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(

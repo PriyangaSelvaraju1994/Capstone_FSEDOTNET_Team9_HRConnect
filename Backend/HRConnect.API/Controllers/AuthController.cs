@@ -7,6 +7,7 @@ using HRConnect.API.Data;
 using HRConnect.API.DTOs;
 using HRConnect.API.DTOs.Employee;
 using BCrypt.Net;
+using System.Security.Claims;
 
 namespace HRConnect.API.Controllers;
 [ApiController]
@@ -16,11 +17,18 @@ public class AuthController : ControllerBase
     private readonly IJwtService _jwtService;
     private readonly ApplicationDbContext _context;
     private readonly IEmployeeService _employeeService;
-    public AuthController(IJwtService jwtService, ApplicationDbContext context, IEmployeeService employeeService)
+    private readonly ITokenRevocationService _tokenRevocationService;
+
+    public AuthController(
+        IJwtService jwtService,
+        ApplicationDbContext context,
+        IEmployeeService employeeService,
+        ITokenRevocationService tokenRevocationService)
     {
         _jwtService = jwtService;
         _context = context;
         _employeeService = employeeService;
+        _tokenRevocationService = tokenRevocationService;
     }
 
     [HttpPost("register")]
@@ -76,8 +84,29 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("logout")]
+    [Authorize]
     public IActionResult Logout()
-    {      
-        return Ok("User logged out successfully");
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        var jti = User.FindFirst("jti")?.Value;
+
+        if (!string.IsNullOrEmpty(jti))
+        {
+            _tokenRevocationService.RevokeToken(jti);
+        }
+
+        return Ok(new
+        {
+            httpResponseCode = 200,
+            resultStatus = "success",
+            resultSet = new
+            {
+                message = "User logged out successfully. Token has been revoked on the server.",
+                userId = userId,
+                email = email,
+                tokenRevoked = !string.IsNullOrEmpty(jti)
+            }
+        });
     }
 }
