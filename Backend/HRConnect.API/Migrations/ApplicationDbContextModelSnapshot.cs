@@ -155,6 +155,9 @@ namespace HRConnect.API.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsAutoApproved")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LeaveType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

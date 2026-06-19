@@ -19,6 +19,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<DefaultLeaveBalancesForNewEmployee>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddHostedService<LeaveAutoApprovalService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services

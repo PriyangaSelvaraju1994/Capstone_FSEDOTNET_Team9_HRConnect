@@ -7,4 +7,5 @@ public interface IEmployeeService
     Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeDto request);
     Task<EmployeeDto> UpdateEmployeeAsync(int id, UpdateEmployeeDto request);
     Task DeleteEmployeeAsync(int id);
+    Task<string> UpdateEmployeePasswordAsync(UpdateEmployeePasswordDto request);
 }

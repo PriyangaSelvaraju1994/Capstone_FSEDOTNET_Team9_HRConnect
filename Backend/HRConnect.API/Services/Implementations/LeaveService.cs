@@ -87,7 +87,9 @@ public class LeaveService : ILeaveService
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Reason = request.Reason,
-            Status = "Pending"
+            Status = "Pending",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = request.CreatedBy ?? "System" // or set to the current user if available
         };
      var leaveDays =
     CalculateLeaveDays(request.StartDate, request.EndDate);
@@ -124,7 +126,11 @@ public class LeaveService : ILeaveService
                 StartDate = l.StartDate,
                 EndDate = l.EndDate,
                 Status = l.Status,
-                Reason = l.Reason
+                Reason = l.Reason,
+                CreatedAt = l.CreatedDate ?? DateTime.MinValue,
+                UpdatedAt = l.UpdatedDate ?? DateTime.MinValue,
+                UpdatedBy = l.UpdatedBy,
+                IsAutoApproved = l.IsAutoApproved
             })
             .ToListAsync();
     }
@@ -161,6 +167,9 @@ public class LeaveService : ILeaveService
         }
         
         leave.Status = request.Status;
+        leave.UpdatedDate = request.UpdatedDate ?? DateTime.UtcNow;
+        leave.UpdatedBy = request.UpdatedBy ?? "System"; // or set to the current user if available
+        _context.LeaveRequests.Update(leave);
         _context.LeaveBalances.Update(balance);
         await _context.SaveChangesAsync();
 
@@ -200,7 +209,10 @@ public class LeaveService : ILeaveService
                 EndDate = l.EndDate,
                 Status = l.Status.ToString(),
                 Reason = l.Reason,
-                CreatedAt = l.CreatedDate ?? DateTime.MinValue
+                CreatedAt = l.CreatedDate ?? DateTime.MinValue,
+                UpdatedAt = l.UpdatedDate ?? DateTime.MinValue,
+                UpdatedBy = l.UpdatedBy,
+                IsAutoApproved = l.IsAutoApproved
             }).ToList();
 
 //sort by status pending first, then by start date descending
@@ -215,10 +227,17 @@ public class LeaveService : ILeaveService
         var leave = await _context.LeaveRequests
             .FirstOrDefaultAsync(l => l.Id == leaveId);
 
+            //get user details
+            var user = await _context.Employees
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id == leave.EmployeeId);
+
         if (leave == null)
             throw new NotFoundException("Leave request not found");
 
         leave.Status = LeaveStatus.Cancelled.ToString();
+        leave.UpdatedDate = DateTime.UtcNow;
+        leave.UpdatedBy = user?.User?.Email ?? "System"; // or set to the current user if available
         _context.LeaveRequests.Update(leave);
         await _context.SaveChangesAsync();
 
