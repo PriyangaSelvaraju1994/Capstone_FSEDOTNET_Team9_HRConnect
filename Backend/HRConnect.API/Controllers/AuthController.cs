@@ -7,6 +7,8 @@ using HRConnect.API.Data;
 using HRConnect.API.DTOs;
 using HRConnect.API.DTOs.Employee;
 using BCrypt.Net;
+using System.Security.Claims;
+using HRConnect.API.Services;
 
 namespace HRConnect.API.Controllers;
 [ApiController]
@@ -16,11 +18,13 @@ public class AuthController : ControllerBase
     private readonly IJwtService _jwtService;
     private readonly ApplicationDbContext _context;
     private readonly IEmployeeService _employeeService;
-    public AuthController(IJwtService jwtService, ApplicationDbContext context, IEmployeeService employeeService)
+    private readonly ITokenRevocationService _tokenRevocationService;
+    public AuthController(IJwtService jwtService, ApplicationDbContext context, IEmployeeService employeeService, ITokenRevocationService tokenRevocationService)
     {
         _jwtService = jwtService;
         _context = context;
         _employeeService = employeeService;
+        _tokenRevocationService = tokenRevocationService;
     }
 
     [HttpPost("register")]
@@ -46,7 +50,8 @@ public class AuthController : ControllerBase
             UserId = user.Id,
             Department = request.Department,
             Designation = request.Designation,
-            JoiningDate = request.DateOfJoining
+            JoiningDate = request.DateOfJoining,
+            IsActive = false,
         };
         await _employeeService.CreateEmployeeAsync(employee);
         return Ok("User registered successfully");
@@ -58,10 +63,21 @@ public class AuthController : ControllerBase
          var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Email == request.Email);
 
+       
         if (user == null)
         return Unauthorized("Invalid credentials");
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         return Unauthorized("Invalid credentials");
+        //check user isactive
+        if (user != null)
+        {
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == user.Id);
+            if (employee != null && !employee.IsActive)
+            {
+                return Unauthorized("User is not active. Please contact HR for activation.");
+            }
+        }
 
         var token = _jwtService.GenerateToken(user);
         return Ok(new { 
@@ -75,9 +91,31 @@ public class AuthController : ControllerBase
             });
     }
 
+    [Authorize]
     [HttpPost("logout")]
     public IActionResult Logout()
-    {      
+    {    
+         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        var jti = User.FindFirst("jti")?.Value;
+
+        if (!string.IsNullOrEmpty(jti))
+        {
+            _tokenRevocationService.RevokeToken(jti);
+        }
+
+        return Ok(new
+        {
+            httpResponseCode = 200,
+            resultStatus = "success",
+            resultSet = new
+            {
+                message = "User logged out successfully. Token has been revoked on the server.",
+                userId = userId,
+                email = email,
+                tokenRevoked = !string.IsNullOrEmpty(jti)
+            }
+        });  
         return Ok("User logged out successfully");
     }
 }
