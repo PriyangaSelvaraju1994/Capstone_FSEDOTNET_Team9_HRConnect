@@ -47,7 +47,7 @@ export default function AdminQueuePage() {
   const total = requests.length;
 
   return (
-    <AppShell pendingCount={total}>
+    <AppShell>
       <PageHeader
         title={
           <span className="flex items-center gap-2">

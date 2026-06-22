@@ -30,7 +30,6 @@ export default function EmployeeDetailPage() {
     balancesLoading,
     history,
     historyLoading,
-    pendingCount,
     refetch,
     handleDelete,
   } = useEmployeeDetail({ employeeId: Number(id), historyPageSize: HISTORY_PAGE_SIZE });
@@ -39,7 +38,7 @@ export default function EmployeeDetailPage() {
   if (isNotFound) return <Navigate to="/404" replace />;
 
   return (
-    <AppShell pendingCount={pendingCount ?? undefined}>
+    <AppShell>
       <Breadcrumb
         items={[
           { label: 'Employees', to: '/employees' },

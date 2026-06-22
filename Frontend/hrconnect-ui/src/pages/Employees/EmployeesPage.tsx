@@ -36,7 +36,6 @@ export default function EmployeesPage() {
     totalCount,
     loading,
     error,
-    pendingCount,
     search,
     setSearch,
     department,
@@ -52,7 +51,7 @@ export default function EmployeesPage() {
   } = useEmployeesList();
 
   return (
-    <AppShell pendingCount={pendingCount ?? undefined}>
+    <AppShell>
       <PageHeader
         title="Employees"
         description={

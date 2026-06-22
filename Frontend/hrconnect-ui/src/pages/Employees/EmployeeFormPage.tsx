@@ -25,7 +25,6 @@ import {
 } from '../../store/slices/employeesSlice';
 import {
   fetchPendingCount,
-  selectPendingCount,
 } from '../../store/slices/leavesSlice';
 import type { Department } from '../../types/auth';
 
@@ -60,7 +59,6 @@ export default function EmployeeFormPage({ mode }: Props) {
   const dispatch = useAppDispatch();
   const existing = useAppSelector(selectEmployeeById(editId));
   const isNotFound = useAppSelector(selectEmployeeIsNotFound(editId));
-  const pendingCount = useAppSelector(selectPendingCount);
 
   // Load the employee record in edit mode + the header badge always.
   useEffect(() => {
@@ -136,7 +134,7 @@ export default function EmployeeFormPage({ mode }: Props) {
   const isEdit = mode === 'edit';
 
   return (
-    <AppShell maxWidth="max-w-5xl" pendingCount={pendingCount ?? undefined}>
+    <AppShell maxWidth="max-w-5xl">
       <Breadcrumb
         items={[
           { label: 'Employees', to: '/employees' },

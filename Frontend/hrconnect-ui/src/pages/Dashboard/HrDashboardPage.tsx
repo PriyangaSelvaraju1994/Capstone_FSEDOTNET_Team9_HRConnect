@@ -53,7 +53,7 @@ export default function HrDashboardPage() {
   const pendingCount = data?.pendingCount;
 
   return (
-    <AppShell pendingCount={pendingCount} hasUnreadNotifications>
+    <AppShell>
       <PageHeader
         title="HR overview"
         description={formatLongDate()}
