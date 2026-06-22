@@ -48,9 +48,7 @@ public class AuthController : ControllerBase
         var employee = new CreateEmployeeDto
         {
             UserId = user.Id,
-            Department = request.Department,
-            Designation = request.Designation,
-            JoiningDate = request.DateOfJoining,
+            
             IsActive = false,
         };
         await _employeeService.CreateEmployeeAsync(employee);

@@ -12,6 +12,7 @@ export interface ProfileUpdatePayload {
 }
 
 export interface PasswordChangePayload {
+  employeeId: number;
   currentPassword: string;
   newPassword: string;
 }
@@ -54,7 +55,7 @@ export const profileApi = {
 
   async changePassword(payload: PasswordChangePayload): Promise<void> {
     try {
-      await http.post<void>('/me/password', payload);
+      await http.post<void>('/employees/updatepassword', payload);
     } catch (err) {
       throw toPasswordError(err);
     }

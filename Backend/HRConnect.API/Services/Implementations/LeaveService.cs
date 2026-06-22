@@ -212,7 +212,9 @@ public class LeaveService : ILeaveService
                 CreatedAt = l.CreatedDate ?? DateTime.MinValue,
                 UpdatedAt = l.UpdatedDate ?? DateTime.MinValue,
                 UpdatedBy = l.UpdatedBy,
-                IsAutoApproved = l.IsAutoApproved
+                IsAutoApproved = l.IsAutoApproved,
+                Department = l.Employee.Department,
+                Designation = l.Employee.Designation
             }).ToList();
 
 //sort by status pending first, then by start date descending

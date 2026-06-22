@@ -25,4 +25,8 @@ public class LeaveRequestDto
     public string UpdatedBy { get; set; }
 
     public bool IsAutoApproved { get; set; }
+
+    public string Department { get; set; }
+    
+    public string Designation { get; set; }
 }
