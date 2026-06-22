@@ -13,15 +13,17 @@ public class AuthControllerTests : IDisposable
 {
     private readonly Mock<IJwtService> _jwtServiceMock;
     private readonly Mock<IEmployeeService> _employeeServiceMock;
+    private readonly Mock<ITokenRevocationService> _tokenServiceMock;
     private readonly ApplicationDbContext _context;
     private readonly AuthController _controller;
     public AuthControllerTests()
     {
         _jwtServiceMock = new Mock<IJwtService>();
         _employeeServiceMock = new Mock<IEmployeeService>();
+        _tokenServiceMock = new Mock<ITokenRevocationService>();
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         _context = new ApplicationDbContext(options);
-        _controller = new AuthController(_jwtServiceMock.Object,_context,_employeeServiceMock.Object);
+        _controller = new AuthController(_jwtServiceMock.Object,_context,_employeeServiceMock.Object, _tokenServiceMock.Object);
     }
     public void Dispose()
     {

@@ -31,7 +31,9 @@ public class EmployeeService : IEmployeeService
                 FullName = e.User != null ? e.User.FullName : string.Empty,
                 Department = e.Department,
                 Designation = e.Designation,
-                JoiningDate = e.JoiningDate
+                JoiningDate = e.JoiningDate,
+                Email = e.User != null ? e.User.Email : string.Empty,
+                IsActive = e.IsActive
             })
             .ToListAsync();
     }
@@ -52,7 +54,9 @@ public class EmployeeService : IEmployeeService
                 FullName = e.User != null ? e.User.FullName : string.Empty,
                 Department = e.Department,
                 Designation = e.Designation,
-                JoiningDate = e.JoiningDate
+                JoiningDate = e.JoiningDate,
+                Email = e.User != null ? e.User.Email : string.Empty,
+                IsActive = e.IsActive
             })
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -88,7 +92,8 @@ public class EmployeeService : IEmployeeService
             UserId = request.UserId,
             Department = request.Department.Trim(),
             Designation = request.Designation.Trim(),
-            JoiningDate = request.JoiningDate
+            JoiningDate = request.JoiningDate,
+            IsActive = false // New employees are inactive by default until HR activates them after verification
         };
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
@@ -102,7 +107,9 @@ public class EmployeeService : IEmployeeService
             UserId = employee.UserId,
             Department = employee.Department,
             Designation = employee.Designation,
-            JoiningDate = employee.JoiningDate
+            JoiningDate = employee.JoiningDate,
+            Email = employee.User != null ? employee.User.Email : string.Empty,
+            IsActive = employee.IsActive
         };
     }
 
@@ -126,12 +133,13 @@ public class EmployeeService : IEmployeeService
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (employee == null)
         {
-            throw new NotFoundException($"Employee with ID {id} not found.");
+            throw new NotFoundException($"Employee not found.");
         }
 
         employee.Department = request.Department.Trim();
         employee.Designation = request.Designation.Trim();
         employee.JoiningDate = request.JoiningDate;
+        employee.IsActive = request.IsActive;
 
         await _context.SaveChangesAsync();
         return new EmployeeDto
@@ -140,7 +148,8 @@ public class EmployeeService : IEmployeeService
             UserId = employee.UserId,
             Department = employee.Department,
             Designation = employee.Designation,
-            JoiningDate = employee.JoiningDate
+            JoiningDate = employee.JoiningDate,
+            IsActive = employee.IsActive
         };
     }
 
@@ -170,5 +179,35 @@ public class EmployeeService : IEmployeeService
         _context.Employees.Remove(employee);
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<string> UpdateEmployeePasswordAsync(UpdateEmployeePasswordDto request)
+    {
+        // Checking if Employee ID is valid
+        if (request.EmployeeId <= 0)
+        {
+            throw new BadRequestException("Invalid employee details");
+        }
+
+        // Fetching the employee along with the related user
+        var employee = await _context.Employees
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id == request.EmployeeId);
+
+        if (employee == null || employee.User == null)
+        {
+            throw new NotFoundException($"Employee not found.");
+        }
+
+        // Verifying the current password
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, employee.User.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+        }
+
+        // Hashing the new password and updating it
+        employee.User.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+        return "Password updated successfully.";
     }
 }
