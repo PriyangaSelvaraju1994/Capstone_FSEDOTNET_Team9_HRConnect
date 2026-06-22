@@ -14,15 +14,38 @@ import type {
   LeaveType,
 } from '../types/leave';
 
+type LeaveRequestApiShape = LeaveRequest & {
+  employeeDepartment?: string;
+  employeeDesignation?: string;
+  autoApproved?: boolean;
+};
+
+const normalizeLeaveRequest = (request: LeaveRequestApiShape): LeaveRequest => ({
+  ...request,
+  department: request.department ?? request.employeeDepartment,
+  designation: request.designation ?? request.employeeDesignation,
+  isAutoApproved: request.isAutoApproved ?? request.autoApproved,
+});
+
+const normalizeLeaveRequests = (
+  requests: LeaveRequestApiShape[],
+): LeaveRequest[] => requests.map(normalizeLeaveRequest);
+
 export const leavesApi = {
   list: (params: LeaveListParams = {}): Promise<LeaveRequest[]> =>
-    http.get<LeaveRequest[]>('/leaves/mine', { params }).then((r) => r.data),
+    http
+      .get<LeaveRequestApiShape[]>('/leaves/mine', { params })
+      .then((r) => normalizeLeaveRequests(r.data)),
 
   getById: (id: string): Promise<LeaveRequest> =>
-    http.get<LeaveRequest>(`/leaves/${id}`).then((r) => r.data),
+    http
+      .get<LeaveRequestApiShape>(`/leaves/${id}`)
+      .then((r) => normalizeLeaveRequest(r.data)),
 
   listPending: (): Promise<LeaveRequest[]> =>
-    http.get<LeaveRequest[]>('/leaves/all').then((r) => r.data),
+    http
+      .get<LeaveRequestApiShape[]>('/leaves/all')
+      .then((r) => normalizeLeaveRequests(r.data)),
 
   getPendingCount: (): Promise<number> =>
     http
@@ -48,20 +71,22 @@ export const leavesApi = {
     computeLeavePreview(balances, type, startIso, endIso),
 
   create: (payload: CreateLeaveRequest): Promise<LeaveRequest> =>
-    http.post<LeaveRequest>('/leaves', payload).then((r) => r.data),
+    http
+      .post<LeaveRequestApiShape>('/leaves', payload)
+      .then((r) => normalizeLeaveRequest(r.data)),
 
   cancel: (id: string): Promise<LeaveRequest> =>
     http
-      .post<LeaveRequest>(`/leaves/cancelleave/${id}`)
-      .then((r) => r.data),
+      .post<LeaveRequestApiShape>(`/leaves/cancelleave/${id}`)
+      .then((r) => normalizeLeaveRequest(r.data)),
 
   approve: (id: string): Promise<LeaveRequest> =>
     http
-      .put<LeaveRequest>(`/leaves/${id}/status`, { status: 'Approved' })
-      .then((r) => r.data),
+      .put<LeaveRequestApiShape>(`/leaves/${id}/status`, { status: 'Approved' })
+      .then((r) => normalizeLeaveRequest(r.data)),
 
   reject: (id: string): Promise<LeaveRequest> =>
     http
-      .put<LeaveRequest>(`/leaves/${id}/status`, { status: 'Rejected' })
-      .then((r) => r.data),
+      .put<LeaveRequestApiShape>(`/leaves/${id}/status`, { status: 'Rejected' })
+      .then((r) => normalizeLeaveRequest(r.data)),
 };

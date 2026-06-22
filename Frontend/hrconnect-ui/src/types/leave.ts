@@ -28,11 +28,13 @@ export interface LeaveRequest {
   startDate: string; // ISO date
   endDate: string; // ISO date
   status: LeaveStatus;
-  submittedAt: string; // ISO timestamp
+  /** True when the request was approved by system rule without manual HR action. */
+  isAutoApproved?: boolean;
+  createdAt: string; // ISO timestamp
   reason?: string;
   /** Designation snapshot — used by the S9 detail panel header. */
-  employeeDesignation?: string;
-  employeeDepartment?: string;
+  department?: string;
+  designation?: string;
 }
 
 /** Payload accepted by `leavesApi.create()` (S5). */

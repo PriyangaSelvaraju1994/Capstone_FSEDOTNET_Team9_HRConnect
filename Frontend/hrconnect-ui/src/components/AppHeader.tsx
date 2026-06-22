@@ -1,4 +1,4 @@
-import { Bell, Building2, ChevronDown, LogOut } from 'lucide-react';
+import { Building2, ChevronDown, LogOut } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -18,27 +18,20 @@ const EMPLOYEE_NAV: NavItem[] = [
   { to: '/profile', label: 'Profile' },
 ];
 
-function buildAdminNav(pendingCount?: number): NavItem[] {
+function buildAdminNav(): NavItem[] {
   return [
     { to: '/', label: 'Dashboard' },
     { to: '/employees', label: 'Employees' },
-    { to: '/admin/queue', label: 'Queue', badge: pendingCount },
+    { to: '/admin/queue', label: 'Queue' },
     { to: '/my-leaves', label: 'My Leaves' },
     { to: '/profile', label: 'Profile' },
   ];
 }
 
-interface Props {
-  /** When provided on admin views, renders a count on the Queue nav item. */
-  pendingCount?: number;
-  /** When true, the bell icon shows an unread dot (mock notification). */
-  hasUnreadNotifications?: boolean;
-}
-
-export function AppHeader({ pendingCount, hasUnreadNotifications }: Props) {
+export function AppHeader() {
   const { user, isAdmin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const navItems = isAdmin ? buildAdminNav(pendingCount) : EMPLOYEE_NAV;
+  const navItems = isAdmin ? buildAdminNav() : EMPLOYEE_NAV;
   const initials = user ? getInitials(user.firstName ?? '', user.lastName ?? '') : '··';
 
   return (
@@ -63,31 +56,12 @@ export function AppHeader({ pendingCount, hasUnreadNotifications }: Props) {
                 }
               >
                 {item.label}
-                {typeof item.badge === 'number' && item.badge > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                    {item.badge}
-                  </span>
-                )}
               </NavLink>
             ))}
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative text-slate-500 hover:text-slate-900 p-1.5 rounded-md hover:bg-slate-100"
-          >
-            <Bell className="w-5 h-5" aria-hidden="true" />
-            {hasUnreadNotifications && (
-              <span
-                className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full"
-                aria-hidden="true"
-              />
-            )}
-          </button>
-
           <div className="relative">
             <button
               type="button"

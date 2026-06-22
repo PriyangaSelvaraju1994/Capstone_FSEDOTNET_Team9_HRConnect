@@ -36,14 +36,14 @@ export function useAdminQueue() {
     void dispatch(fetchPendingQueue());
   }, [dispatch]);
 
-  // Auto-select first item when list changes
+  // Keep selection only if it still exists in the current list.
   useEffect(() => {
     if (data.length === 0) {
       setSelectedId(null);
       return;
     }
-    if (!selectedId || !data.some((r) => r.id === selectedId)) {
-      setSelectedId(data[0].id);
+    if (selectedId && !data.some((r) => r.id === selectedId)) {
+      setSelectedId(null);
     }
   }, [data, selectedId]);
 
@@ -79,6 +79,7 @@ export function useAdminQueue() {
       selected.leaveType,
       selected.startDate,
       selected.endDate,
+
     );
   }, [selected, selectedBalances]);
 
