@@ -31,7 +31,6 @@ export default function EmployeeDashboardPage() {
       error: leavesError,
     } = useMyLeaves({ userId });
 
-  console.log('EmployeeDashboardPage data:', data);
   return (
     <AppShell>
       <PageHeader

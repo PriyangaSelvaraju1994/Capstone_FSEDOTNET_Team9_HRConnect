@@ -12,14 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useMyLeaves } from '../../hooks/useMyLeaves';
 import { LEAVE_STATUS_FILTERS } from '../../types/leave';
 import { range } from '../../utils/array';
-import { formatDateRange } from '../../utils/formatDate';
-
-function calculateLeaveDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include the start date
-}
+import { calculateLeaveDays, formatDateRange } from '../../utils/formatDate';
 
 export default function MyLeavesPage() {
   const { user } = useAuth();
