@@ -101,12 +101,7 @@ function ProfileCard({ loading, emp }: ProfileCardProps) {
   const displayName = emp
     ? `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim()
     : '';
-  const initials =
-    emp && (emp.firstName || emp.lastName)
-      ? getInitials(emp.firstName ?? '', emp.lastName ?? '')
-      : displayName
-        ? displayName.slice(0, 2).toUpperCase()
-        : '··';
+  const initials = getInitials(emp?.fullName ?? '', '');
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6">
@@ -140,29 +135,29 @@ function ProfileCard({ loading, emp }: ProfileCardProps) {
                 Joined on {formatDate(emp.joiningDate)}
               </div>
               <p className="text-xs text-slate-500 mt-1">
-            Profile details are managed by HR.{' '}
-            <a
-              href="mailto:hrconnect42@gmail.com"
-              className="text-brand-600 hover:underline"
-            >
-              Contact HR
-            </a>{' '}
-            to change.
-          </p>
+                Profile details are managed by HR.{' '}
+                <a
+                  href="mailto:hrconnect42@gmail.com"
+                  className="text-brand-600 hover:underline"
+                >
+                  Contact HR
+                </a>{' '}
+                to change.
+              </p>
             </div>
-            
+
           </>
-          
+
         )}
       </div>
 
       {emp && (
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
-           
+
           </div>
-         
-         
+
+
         </div>
       )}
     </div>
@@ -318,9 +313,8 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         ref={ref}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-          error ? 'border-rose-400' : 'border-slate-300'
-        } ${className ?? ''}`}
+        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${error ? 'border-rose-400' : 'border-slate-300'
+          } ${className ?? ''}`}
         {...rest}
       />
       {error && (
