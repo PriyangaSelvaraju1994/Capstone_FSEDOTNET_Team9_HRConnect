@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, CheckCircle2, Loader2, X } from 'lucide-react';
 import type { LeaveBalancePreview, LeaveRequest } from '../types/leave';
 import { calculateLeaveDays, formatDateRange } from '../utils/formatDate';
 import { getAvatarClassName } from '../utils/avatarColor';
@@ -17,6 +17,8 @@ interface Props {
   onReject: () => void;
   /** Disables action buttons + spins the relevant one. */
   busy?: 'approve' | 'reject' | null;
+  /** Shows success message and disables UI. */
+  successMessage?: 'approved' | 'rejected' | null;
 }
 
 /**
@@ -31,6 +33,7 @@ export function LeaveDetailPanel({
   onApprove,
   onReject,
   busy = null,
+  successMessage = null,
 }: Props) {
   const meta = getLeaveTypeMeta(request.leaveType);
   const TypeIcon = meta.Icon;
@@ -50,7 +53,8 @@ export function LeaveDetailPanel({
     <aside
       role="dialog"
       aria-label="Leave request details"
-      className="bg-white border border-slate-200 rounded-lg shadow-lg flex flex-col"
+      className={`bg-white border border-slate-200 rounded-lg shadow-lg flex flex-col ${successMessage ? 'opacity-50' : ''}`}
+      style={{ pointerEvents: successMessage ? 'none' : 'auto' }}
     >
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <h2 className="font-semibold">Request details</h2>
@@ -63,6 +67,20 @@ export function LeaveDetailPanel({
           <X className="w-4 h-4 text-slate-500" aria-hidden="true" />
         </button>
       </div>
+
+      {successMessage && (
+        <div
+          role="status"
+          className="p-4 border-b border-emerald-200 bg-emerald-50 flex items-center gap-2 text-emerald-900 text-sm"
+        >
+          <CheckCircle2 className="w-4 h-4 flex-none" aria-hidden="true" />
+          <span className="flex-1">
+            {successMessage === 'approved'
+              ? 'Request approved successfully. Advancing…'
+              : 'Request rejected successfully. Advancing…'}
+          </span>
+        </div>
+      )}
 
       <div className="p-5 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 mb-5">

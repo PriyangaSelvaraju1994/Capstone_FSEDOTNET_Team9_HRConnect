@@ -130,7 +130,7 @@ export default function HrDashboardPage() {
               Shortcuts
             </h2>
             <div className="space-y-2">
-              <ShortcutLink to="/employees/new" Icon={UserPlus} label="Add employee" />
+              {/* <ShortcutLink to="/employees/new" Icon={UserPlus} label="Add employee" /> */}
               <ShortcutLink to="/employees" Icon={Search} label="Search employees" />
               <ShortcutLink to="/admin/queue" Icon={Inbox} label="Review pending leaves" />
             </div>

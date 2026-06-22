@@ -8,6 +8,7 @@ import {
   selectPendingCount,
 } from '../store/slices/leavesSlice';
 import type { Department, Designation } from '../types/auth';
+import type { EmployeeStatusFilter } from '../types/employee';
 import { usePagination } from './usePagination';
 import { useSearch } from './useSearch';
 import { useFilters } from './useFilters';
@@ -20,6 +21,7 @@ export interface UseEmployeesListOptions {
 interface EmployeeFilters extends Record<string, unknown> {
   department: Department | 'All';
   designation: Designation | 'All';
+  status: EmployeeStatusFilter;
 }
 
 /**
@@ -32,7 +34,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
   const searchState = useSearch();
   const pagination = usePagination({ pageSize });
   const filterState = useFilters<EmployeeFilters>({
-    initialFilters: { department: 'All', designation: 'All' },
+    initialFilters: { department: 'All', designation: 'All', status: 'All' },
   });
 
   const dispatch = useAppDispatch();
@@ -59,13 +61,25 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
         filterState.filters.designation === 'All' ||
         employee.designation === filterState.filters.designation;
 
-      return matchesSearch && matchesDepartment && matchesDesignation;
+      const matchesStatus =
+        filterState.filters.status === 'All' ||
+        (filterState.filters.status === 'Active'
+          ? Boolean(employee.isActive)
+          : !employee.isActive);
+
+      return (
+        matchesSearch &&
+        matchesDepartment &&
+        matchesDesignation &&
+        matchesStatus
+      );
     });
   }, [
     list.items,
     normalizedSearch,
     filterState.filters.department,
     filterState.filters.designation,
+    filterState.filters.status,
   ]);
 
   const totalCount = filteredEmployees.length;
@@ -89,6 +103,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
         search: searchState.debouncedSearch,
         department: filterState.filters.department,
         designation: filterState.filters.designation,
+        status: filterState.filters.status,
         page: pagination.page,
         pageSize: pagination.pageSize,
       }),
@@ -98,6 +113,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     searchState.debouncedSearch,
     filterState.filters.department,
     filterState.filters.designation,
+    filterState.filters.status,
     pagination.page,
     pagination.pageSize,
   ]);
@@ -108,6 +124,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
         search: searchState.debouncedSearch,
         department: filterState.filters.department,
         designation: filterState.filters.designation,
+        status: filterState.filters.status,
         page: pagination.page,
         pageSize: pagination.pageSize,
       }),
@@ -117,6 +134,7 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     searchState.debouncedSearch,
     filterState.filters.department,
     filterState.filters.designation,
+    filterState.filters.status,
     pagination.page,
     pagination.pageSize,
   ]);
@@ -137,16 +155,26 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     [filterState, pagination],
   );
 
+  const setStatus = useCallback(
+    (status: EmployeeStatusFilter) => {
+      filterState.setFilter('status', status);
+      pagination.resetPage();
+    },
+    [filterState, pagination],
+  );
+
   const activeFilters = useActiveFilters({
     filters: filterState.filters,
-    defaultFilters: { department: 'All', designation: 'All' },
+    defaultFilters: { department: 'All', designation: 'All', status: 'All' },
     filterLabels: {
       department: (value) => `Department: ${value}`,
       designation: (value) => `Designation: ${value}`,
+      status: (value) => `Status: ${value}`,
     },
     onClear: (key) => {
       if (key === 'department') setDepartment('All');
       if (key === 'designation') setDesignation('All');
+      if (key === 'status') setStatus('All');
     },
   });
 
@@ -179,8 +207,10 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     // Filters
     department: filterState.filters.department,
     designation: filterState.filters.designation,
+    status: filterState.filters.status,
     setDepartment,
     setDesignation,
+    setStatus,
     activeFilters,
     clearAllFilters,
 
