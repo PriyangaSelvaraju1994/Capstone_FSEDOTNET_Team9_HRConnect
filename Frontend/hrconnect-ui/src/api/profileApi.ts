@@ -45,17 +45,17 @@ function toPasswordError(err: unknown): PasswordChangeError {
 }
 
 export const profileApi = {
-  get(): Promise<Employee> {
-    return http.get<Employee>('/me').then((r) => r.data);
+  get(userId: number): Promise<Employee> {
+    return http.get<Employee>(`/employees/${userId}`).then((r) => r.data);
   },
 
   update(payload: ProfileUpdatePayload): Promise<Employee> {
-    return http.patch<Employee>('/me', payload).then((r) => r.data);
+    return http.put<Employee>('/me', payload).then((r) => r.data);
   },
 
   async changePassword(payload: PasswordChangePayload): Promise<void> {
     try {
-      await http.post<void>('/employees/updatepassword', payload);
+      await http.put<void>('/employees/updatepassword', payload);
     } catch (err) {
       throw toPasswordError(err);
     }
