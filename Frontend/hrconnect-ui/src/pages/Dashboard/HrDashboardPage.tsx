@@ -6,7 +6,6 @@ import {
   Inbox,
   Search,
   UserCheck,
-  UserPlus,
   Users,
 } from 'lucide-react';
 import {
