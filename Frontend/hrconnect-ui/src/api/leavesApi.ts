@@ -47,11 +47,6 @@ export const leavesApi = {
       .get<LeaveRequestApiShape[]>('/leaves/all')
       .then((r) => normalizeLeaveRequests(r.data)),
 
-  getPendingCount: (): Promise<number> =>
-    http
-      .get<{ count: number }>('/leaves/pending/count')
-      .then((r) => r.data.count),
-
   getBalances: (employeeId: number): Promise<LeaveBalance[]> =>
     http
       .get<LeaveBalance[]>(`/leaves/leavebalances/${employeeId}`)

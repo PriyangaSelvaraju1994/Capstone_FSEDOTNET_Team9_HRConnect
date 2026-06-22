@@ -11,7 +11,6 @@ import {
 import {
   fetchBalances,
   fetchEmployeeHistory,
-  fetchPendingCount,
   selectBalancesFor,
   selectEmployeeHistory,
   selectPendingCount,
@@ -58,7 +57,6 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     void dispatch(
       fetchEmployeeHistory({ employeeId }),
     );
-    void dispatch(fetchPendingCount());
   }, [dispatch, employeeId, historyPageSize]);
 
   const refetch = useCallback(() => {

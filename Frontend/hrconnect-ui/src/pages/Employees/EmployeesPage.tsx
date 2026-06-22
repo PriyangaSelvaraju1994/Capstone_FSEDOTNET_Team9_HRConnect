@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronDown, MoreHorizontal, UserPlus, Users, X } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Users, X } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
 import { EmptyState } from '../../components/EmptyState';
@@ -60,13 +60,7 @@ export default function EmployeesPage() {
             : 'Search and filter the company directory.'
         }
         action={
-          <Link
-            to="/employees/new"
-            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 px-4 rounded-md"
-          >
-            <UserPlus className="w-4 h-4" aria-hidden="true" />
-            Add employee
-          </Link>
+          <></>
         }
       />
 
@@ -158,6 +152,7 @@ export default function EmployeesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
+                  <th className="text-left font-medium px-5 py-2.5">Employee ID</th>
                   <th className="text-left font-medium px-5 py-2.5">Name</th>
                   <th className="text-left font-medium px-5 py-2.5">
                     Department
@@ -166,6 +161,7 @@ export default function EmployeesPage() {
                     Designation
                   </th>
                   <th className="text-left font-medium px-5 py-2.5">Email</th>
+                  <th className="text-left font-medium px-5 py-2.5">Status</th>
                   <th className="text-right font-medium px-5 py-2.5">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -174,8 +170,10 @@ export default function EmployeesPage() {
               <tbody className="divide-y divide-slate-100">
                 {employees.map((emp) => {
                   const initials = getInitials(emp.fullName ?? '', '') || '··';
+                  const isActive = Boolean(emp.isActive);
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-slate-700">{`EM${emp.id}`}</td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <Avatar
@@ -197,6 +195,16 @@ export default function EmployeesPage() {
                         {emp.designation}
                       </td>
                       <td className="px-5 py-3 text-slate-500">{emp.email}</td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isActive
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-slate-100 text-slate-600'
+                            }`}
+                        >
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-5 py-3 text-right">
                         <Link
                           to={`/employees/${emp.id}`}

@@ -134,18 +134,6 @@ export const fetchPendingQueue = createAsyncThunk<
   }
 });
 
-export const fetchPendingCount = createAsyncThunk<
-  number,
-  void,
-  { rejectValue: string }
->('leaves/fetchPendingCount', async (_, { rejectWithValue }) => {
-  try {
-    return await leavesApi.getPendingCount();
-  } catch (err) {
-    return rejectWithValue(toMessage(err));
-  }
-});
-
 export const createLeave = createAsyncThunk<
   LeaveRequest,
   CreateLeaveRequest,
@@ -274,18 +262,6 @@ const leavesSlice = createSlice({
       .addCase(fetchPendingQueue.rejected, (state, action) => {
         state.pendingQueue.status = 'failed';
         state.pendingQueue.error = action.payload ?? 'Could not load the queue.';
-      })
-
-      // --- fetchPendingCount
-      .addCase(fetchPendingCount.pending, (state) => {
-        state.pendingCount.status = 'loading';
-      })
-      .addCase(fetchPendingCount.fulfilled, (state, action) => {
-        state.pendingCount.status = 'succeeded';
-        state.pendingCount.value = action.payload;
-      })
-      .addCase(fetchPendingCount.rejected, (state) => {
-        state.pendingCount.status = 'failed';
       })
 
       // --- createLeave success: new leaves are already visible when the user

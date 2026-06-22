@@ -12,10 +12,23 @@ import type {
 } from '../types/employee';
 
 export const employeesApi = {
-  list: (_params: EmployeeListParams = {}): Promise<EmployeeResult[]> =>
-    http
-      .get<EmployeeResult[]>('/employees')
-      .then((r) => r.data),
+  list: (params: EmployeeListParams = {}): Promise<EmployeeResult[]> => {
+    const requestParams: Record<string, string | number> = {};
+
+    if (params.search?.trim()) {
+      requestParams.search = params.search.trim();
+    }
+    if (params.department && params.department !== 'All') {
+      requestParams.department = params.department;
+    }
+    if (params.designation && params.designation !== 'All') {
+      requestParams.designation = params.designation;
+    }
+
+    return http
+      .get<EmployeeResult[]>('/employees', { params: requestParams })
+      .then((r) => r.data);
+  },
 
   getById: (id: number): Promise<EmployeeResult> =>
     http.get<EmployeeResult>(`/employees/${id}`).then((r) => r.data),

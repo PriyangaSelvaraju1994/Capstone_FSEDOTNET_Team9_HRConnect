@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -23,24 +23,102 @@ import {
   selectEmployeeIsNotFound,
   updateEmployee,
 } from '../../store/slices/employeesSlice';
-import {
-  fetchPendingCount,
-} from '../../store/slices/leavesSlice';
 import type { Department } from '../../types/auth';
 
 const DEPARTMENTS: Department[] = ['IT', 'QE', 'Sales', 'HR'];
+const DESIGNATIONS = [
+  'Software Engineer',
+  'QA',
+  'Finance',
+  'Engineer',
+  'Architect',
+] as const;
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const allowedNameKeys = [
+  'Backspace',
+  'Delete',
+  'Tab',
+  'ArrowLeft',
+  'ArrowRight',
+  'Home',
+  'End',
+  'Escape',
+  'Enter',
+];
+
+function preventNonAlphabetKey(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  const isLetter = /^[A-Za-z]$/.test(event.key);
+  const isAllowedKey = allowedNameKeys.includes(event.key);
+
+  if (!isLetter && !isAllowedKey) {
+    event.preventDefault();
+  }
+}
+
+function preventNonAlphabetPaste(event: ClipboardEvent<HTMLInputElement>) {
+  const pastedText = event.clipboardData.getData('text');
+
+  if (!/^[A-Za-z]*$/.test(pastedText)) {
+    event.preventDefault();
+  }
+}
+
+function splitFullName(fullName: string | undefined): { firstName: string; lastName: string } {
+  const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { firstName: '', lastName: '' };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: '' };
+  }
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(' '),
+  };
+}
 
 const schema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'First name is required')
+    .max(50, 'First name must be at most 50 characters')
+    .regex(/^[A-Za-z]+$/, 'First name can only contain letters'),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required')
+    .max(50, 'Last name must be at most 50 characters')
+    .regex(/^[A-Za-z]+$/, 'Last name can only contain letters'),
   email: z
     .string()
     .min(1, 'Email is required')
-    .email('Enter a valid work email'),
+    .email('Enter a valid email like name@apexon.com')
+    .refine(
+      (value) => value.toLowerCase().endsWith('@apexon.com'),
+      'Email must end with @apexon.com',
+    ),
   department: z.enum(['IT', 'QE', 'Sales', 'HR']),
-  designation: z.string().trim().min(1, 'Designation is required'),
-  joiningDate: z.string().min(1, 'Joining date is required'),
-  role: z.enum(['Employee', 'HR Admin']),
+  designation: z
+    .string()
+    .min(1, 'Designation is required')
+    .refine(
+      (value) => DESIGNATIONS.includes(value as (typeof DESIGNATIONS)[number]),
+      'Select a valid designation',
+    ),
+  joiningDate: z
+    .string()
+    .min(1, 'Joining date is required')
+    .refine((value) => value <= today(), 'Joining date cannot be in the future'),
+  isActive: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -63,7 +141,6 @@ export default function EmployeeFormPage({ mode }: Props) {
   // Load the employee record in edit mode + the header badge always.
   useEffect(() => {
     if (editId) void dispatch(fetchEmployeeById(editId));
-    void dispatch(fetchPendingCount());
   }, [dispatch, editId]);
 
   const {
@@ -71,6 +148,8 @@ export default function EmployeeFormPage({ mode }: Props) {
     handleSubmit,
     reset,
     setError,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -80,20 +159,23 @@ export default function EmployeeFormPage({ mode }: Props) {
       email: '',
       department: 'IT',
       designation: '',
-      joiningDate: new Date().toISOString().slice(0, 10),
+      joiningDate: today(),
+      isActive: true,
     },
   });
 
   // Populate form when the edit-mode employee resolves.
   useEffect(() => {
     if (existing) {
+      const { firstName, lastName } = splitFullName(existing.fullName);
       reset({
-        firstName: '',
-        lastName: '',
+        firstName,
+        lastName,
         email: existing.email,
         department: existing.department,
         designation: existing.designation,
         joiningDate: existing.joiningDate.slice(0, 10),
+        isActive: existing.isActive ?? true,
       });
     }
   }, [existing, reset]);
@@ -108,10 +190,15 @@ export default function EmployeeFormPage({ mode }: Props) {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
+      const fullName = `${values.firstName} ${values.lastName}`.trim().replace(/\s+/g, ' ');
+      const payload = isEdit
+        ? { ...values, email: existing?.email ?? values.email, fullName }
+        : { ...values, fullName };
+
       if (editId) {
-        await dispatch(updateEmployee({ id: editId, values })).unwrap();
+        await dispatch(updateEmployee({ id: editId, values: payload })).unwrap();
       } else {
-        await dispatch(createEmployee(values)).unwrap();
+        await dispatch(createEmployee(payload)).unwrap();
       }
       navigate('/employees');
     } catch (e) {
@@ -132,6 +219,7 @@ export default function EmployeeFormPage({ mode }: Props) {
   });
 
   const isEdit = mode === 'edit';
+  const isActive = watch('isActive');
 
   return (
     <AppShell maxWidth="max-w-5xl">
@@ -172,12 +260,20 @@ export default function EmployeeFormPage({ mode }: Props) {
               <TextField
                 id="firstName"
                 label={<>First name <span className="text-rose-600">*</span></>}
+                maxLength={50}
+                disabled={isEdit}
+                onKeyDown={preventNonAlphabetKey}
+                onPaste={preventNonAlphabetPaste}
                 error={errors.firstName?.message}
                 {...register('firstName')}
               />
               <TextField
                 id="lastName"
                 label={<>Last name <span className="text-rose-600">*</span></>}
+                maxLength={50}
+                disabled={isEdit}
+                onKeyDown={preventNonAlphabetKey}
+                onPaste={preventNonAlphabetPaste}
                 error={errors.lastName?.message}
                 {...register('lastName')}
               />
@@ -197,15 +293,21 @@ export default function EmployeeFormPage({ mode }: Props) {
                 <input
                   id="email"
                   type="email"
+                  autoComplete="email"
+                  disabled={isEdit}
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'email-error' : undefined}
                   placeholder="name@apexon.com"
-                  className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                    errors.email ? 'border-rose-400' : 'border-slate-300'
-                  }`}
+                  className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.email ? 'border-rose-400' : 'border-slate-300'
+                    }`}
                   {...register('email')}
                 />
               </div>
+              {isEdit && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Email cannot be changed for an existing employee.
+                </p>
+              )}
               {errors.email && (
                 <p id="email-error" className="text-xs text-rose-600 mt-1">
                   {errors.email.message}
@@ -228,13 +330,13 @@ export default function EmployeeFormPage({ mode }: Props) {
                   <select
                     id="department"
                     aria-invalid={Boolean(errors.department)}
-                    className={`w-full appearance-none px-3 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.department
-                        ? 'border-rose-400'
-                        : 'border-slate-300'
-                    }`}
+                    className={`w-full appearance-none px-3 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.department
+                      ? 'border-rose-400'
+                      : 'border-slate-300'
+                      }`}
                     {...register('department')}
                   >
+                    <option value="">Select department</option>
                     {DEPARTMENTS.map((d) => (
                       <option key={d} value={d}>
                         {d}
@@ -247,24 +349,85 @@ export default function EmployeeFormPage({ mode }: Props) {
                   />
                 </div>
               </div>
-              <TextField
-                id="designation"
-                label={
-                  <>Designation <span className="text-rose-600">*</span></>
-                }
-                placeholder="Engineer"
-                error={errors.designation?.message}
-                {...register('designation')}
-              />
+              <div>
+                <label
+                  htmlFor="designation"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Designation <span className="text-rose-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="designation"
+                    aria-invalid={Boolean(errors.designation)}
+                    aria-describedby={errors.designation ? 'designation-error' : undefined}
+                    className={`w-full appearance-none px-3 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.designation
+                      ? 'border-rose-400'
+                      : 'border-slate-300'
+                      }`}
+                    {...register('designation')}
+                  >
+                    <option value="">Select designation</option>
+                    {DESIGNATIONS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="w-4 h-4 absolute right-3 top-2.5 text-slate-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+                {errors.designation && (
+                  <p id="designation-error" className="text-xs text-rose-600 mt-1">
+                    {errors.designation.message}
+                  </p>
+                )}
+              </div>
               <TextField
                 id="joiningDate"
                 type="date"
+                max={today()}
                 label={
                   <>Joining date <span className="text-rose-600">*</span></>
                 }
                 error={errors.joiningDate?.message}
                 {...register('joiningDate')}
               />
+              <fieldset className="sm:col-span-2">
+                <legend className="block text-sm font-medium mb-1">
+                  Employee status
+                </legend>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isActive}
+                  onClick={() => setValue('isActive', !isActive, { shouldDirty: true })}
+                  className="inline-flex items-center gap-3"
+                >
+                  <span
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${isActive
+                      ? 'bg-emerald-500 border-emerald-500'
+                      : 'bg-slate-300 border-slate-300'
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isActive ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </span>
+                  <span
+                    className={`text-sm font-medium ${isActive ? 'text-emerald-800' : 'text-slate-600'
+                      }`}
+                  >
+                    {isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </button>
+                <p className="text-xs text-slate-500 mt-1">
+                  Toggle to activate or deactivate this employee.
+                </p>
+              </fieldset>
               {/* <fieldset>
                 <legend className="block text-sm font-medium mb-1">
                   Role
@@ -321,7 +484,13 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
-  function TextField({ id, label, error, className, ...rest }, ref) {
+  function TextField({
+    id,
+    label,
+    error,
+    className,
+    ...rest
+  }, ref) {
     return (
       <div>
         <label htmlFor={id} className="block text-sm font-medium mb-1">
@@ -332,9 +501,8 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           ref={ref}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-            error ? 'border-rose-400' : 'border-slate-300'
-          } ${className ?? ''}`}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${error ? 'border-rose-400' : 'border-slate-300'
+            } ${className ?? ''}`}
           {...rest}
         />
         {error && (

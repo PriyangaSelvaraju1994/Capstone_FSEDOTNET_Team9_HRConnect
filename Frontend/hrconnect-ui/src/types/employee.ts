@@ -9,10 +9,10 @@ export interface Employee {
   firstName: string;
   lastName: string;
   email: string;
+  isActive?: boolean;
   phone?: string;
   department: Department;
   designation: string;
-  role: EmployeeRole;
   joiningDate: string; // ISO date
   managerId?: number;
   managerName?: string;
@@ -42,7 +42,8 @@ export interface EmployeeFormValues {
   department: Department;
   designation: string;
   joiningDate: string;
-  role: EmployeeRole;
+  fullName?: string;
+  isActive?: boolean;
 }
 
 export interface EmployeeResult {
@@ -50,6 +51,7 @@ export interface EmployeeResult {
   employeeCode: string;
   fullName: string;
   email: string;
+  isActive?: boolean;
   phone?: string;
   department: Department;
   designation: Designation;
