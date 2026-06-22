@@ -44,7 +44,7 @@ export const fetchProfile = createAsyncThunk<
   { rejectValue: string }
 >('profile/fetch', async (_userId, { rejectWithValue }) => {
   try {
-    return await profileApi.get();
+    return await profileApi.get(_userId);
   } catch (err) {
     return rejectWithValue(toMessage(err, 'Could not load your profile.'));
   }
