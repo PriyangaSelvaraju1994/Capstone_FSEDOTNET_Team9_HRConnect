@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Inbox } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
@@ -7,8 +7,10 @@ import { ErrorBanner } from '../../components/ErrorBanner';
 import { FilterChip } from '../../components/FilterChip';
 import { LeaveDetailPanel } from '../../components/LeaveDetailPanel';
 import { PageHeader } from '../../components/PageHeader';
+import { Pagination } from '../../components/Pagination';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
 import { useAdminQueue } from '../../hooks/useAdminQueue';
+import { usePagination } from '../../hooks/usePagination';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { calculateLeaveDays, formatDateRange, formatRelative } from '../../utils/formatDate';
@@ -33,6 +35,7 @@ export default function AdminQueuePage() {
   } = useAdminQueue();
 
   const [status, setStatus] = useState<LeaveStatusFilter>('Pending');
+  const { page, pageSize, setPage, resetPage } = usePagination({ pageSize: 8 });
   const filteredRequests = useMemo(
     () =>
       status === 'All'
@@ -40,9 +43,24 @@ export default function AdminQueuePage() {
         : requests.filter((request) => request.status === status),
     [requests, status],
   );
+  const pagedRequests = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRequests.slice(start, start + pageSize);
+  }, [filteredRequests, page, pageSize]);
   const total = filteredRequests.length;
   const selectedVisible =
-    selected && (status === 'All' || selected.status === status);
+    selected && pagedRequests.some((request) => request.id === selected.id);
+
+  useEffect(() => {
+    resetPage();
+  }, [status, resetPage]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, pageSize, setPage, total]);
 
   const handleRowClick = (requestId: string) => {
     setSelectedId((current) => (current === requestId ? null : requestId));
@@ -117,75 +135,84 @@ export default function AdminQueuePage() {
               />
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="text-left font-medium px-5 py-2.5">
-                    Employee
-                  </th>
-                  <th className="text-left font-medium px-5 py-2.5">Type</th>
-                  <th className="text-left font-medium px-5 py-2.5">Dates</th>
-                  <th className="text-left font-medium px-5 py-2.5">Days</th>
-                  <th className="text-left font-medium px-5 py-2.5">
-                    Submitted
-                  </th>
-                  <th className="text-left font-medium px-5 py-2.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req) => {
-                  const meta = getLeaveTypeMeta(req.leaveType);
-                  const Icon = meta.Icon;
-                  const isSelected = req.id === selectedId;
-                  const initials = getInitials(req.employeeName ?? '', '') || '··';
-                  return (
-                    <tr
-                      key={req.id}
-                      onClick={() => handleRowClick(req.id)}
-                      aria-selected={isSelected}
-                      className={`cursor-pointer ${isSelected ? 'bg-brand-50' : 'hover:bg-slate-50'
-                        }`}
-                    >
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <Avatar
-                            initials={initials}
-                            size={7}
-                            className={getAvatarClassName(
-                              initials,
-                            )}
-                          />
-                          <span className="font-medium">
-                            {req.employeeName}
+            <>
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="text-left font-medium px-5 py-2.5">
+                      Employee
+                    </th>
+                    <th className="text-left font-medium px-5 py-2.5">Type</th>
+                    <th className="text-left font-medium px-5 py-2.5">Dates</th>
+                    <th className="text-left font-medium px-5 py-2.5">Days</th>
+                    <th className="text-left font-medium px-5 py-2.5">
+                      Submitted
+                    </th>
+                    <th className="text-left font-medium px-5 py-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pagedRequests.map((req) => {
+                    const meta = getLeaveTypeMeta(req.leaveType);
+                    const Icon = meta.Icon;
+                    const isSelected = req.id === selectedId;
+                    const initials = getInitials(req.employeeName ?? '', '') || '··';
+                    return (
+                      <tr
+                        key={req.id}
+                        onClick={() => handleRowClick(req.id)}
+                        aria-selected={isSelected}
+                        className={`cursor-pointer ${isSelected ? 'bg-brand-50' : 'hover:bg-slate-50'
+                          }`}
+                      >
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              initials={initials}
+                              size={7}
+                              className={getAvatarClassName(
+                                initials,
+                              )}
+                            />
+                            <span className="font-medium">
+                              {req.employeeName}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Icon
+                              className={`w-4 h-4 ${meta.text}`}
+                              aria-hidden="true"
+                            />{' '}
+                            {meta.label}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon
-                            className={`w-4 h-4 ${meta.text}`}
-                            aria-hidden="true"
-                          />{' '}
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-slate-700">
-                        {formatDateRange(req.startDate, req.endDate)}
-                      </td>
-                      <td className="px-5 py-3">
-                        {calculateLeaveDays(req.startDate, req.endDate)}
-                      </td>
-                      <td className="px-5 py-3 text-slate-500">
-                        {formatRelative(req.createdAt)}
-                      </td>
-                      <td className="px-5 py-3">
-                        <StatusBadge status={req.status} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-5 py-3 text-slate-700">
+                          {formatDateRange(req.startDate, req.endDate)}
+                        </td>
+                        <td className="px-5 py-3">
+                          {calculateLeaveDays(req.startDate, req.endDate)}
+                        </td>
+                        <td className="px-5 py-3 text-slate-500">
+                          {formatRelative(req.createdAt)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <StatusBadge status={req.status} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <Pagination
+                page={page}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                itemLabel="requests"
+              />
+            </>
           )}
         </div>
 
