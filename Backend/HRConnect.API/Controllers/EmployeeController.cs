@@ -45,6 +45,7 @@ public class EmployeeController : ControllerBase
         return Ok(employee);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
