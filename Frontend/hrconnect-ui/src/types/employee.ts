@@ -6,6 +6,7 @@ export type EmployeeStatusFilter = 'All' | 'Active' | 'Inactive';
 export interface Employee {
   id: number;
   employeeCode: string;
+  fullName: string;
   firstName: string;
   lastName: string;
   email: string;

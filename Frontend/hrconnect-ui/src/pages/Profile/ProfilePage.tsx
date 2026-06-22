@@ -5,12 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   AlertCircle,
-  Check,
   CheckCircle2,
   KeyRound,
   Loader2,
   LogOut,
-  Upload,
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
@@ -19,21 +17,10 @@ import { PageHeader } from '../../components/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import type { Employee } from '../../types/employee';
-import type { ProfileFormValues, PasswordFormValues } from '../../types/forms';
+import type { PasswordFormValues } from '../../types/forms';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { formatDate } from '../../utils/formatDate';
 import { getInitials } from '../../utils/user';
-
-const profileSchema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
-  phone: z
-    .string()
-    .trim()
-    .max(20, 'Phone number is too long')
-    .optional()
-    .or(z.literal('')),
-});
 
 const passwordSchema = z
   .object({
@@ -58,10 +45,6 @@ export default function ProfilePage() {
     employee: emp,
     loading,
     error,
-    profileSaved,
-    profileSaveError,
-    handleUpdateProfile,
-    clearProfileState,
     passwordChanged,
     passwordChangeError,
     handleChangePassword,
@@ -73,7 +56,7 @@ export default function ProfilePage() {
     <AppShell maxWidth="max-w-3xl">
       <PageHeader
         title="Your profile"
-        description="Update your personal info and password."
+        description="View your details and change your password."
       />
 
       {error && (
@@ -85,15 +68,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <ProfileCard
-        loading={loading}
-        emp={emp}
-        userId={userId}
-        profileSaved={profileSaved}
-        profileSaveError={profileSaveError}
-        handleUpdateProfile={handleUpdateProfile}
-        clearProfileState={clearProfileState}
-      />
+      <ProfileCard loading={loading} emp={emp} />
 
       <div className="h-6" />
 
@@ -120,54 +95,18 @@ export default function ProfilePage() {
 interface ProfileCardProps {
   loading: boolean;
   emp: Employee | null;
-  userId: number;
-  profileSaved: boolean;
-  profileSaveError: string | null;
-  handleUpdateProfile: (data: ProfileFormValues) => Promise<void>;
-  clearProfileState: () => void;
 }
 
-function ProfileCard({
-  loading,
-  emp,
-  userId,
-  profileSaved,
-  profileSaveError,
-  handleUpdateProfile,
-  clearProfileState,
-}: ProfileCardProps) {
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting, isDirty },
-  } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: { firstName: '', lastName: '', phone: '' },
-  });
-
-  useEffect(() => {
-    if (emp) {
-      reset({
-        firstName: emp.firstName,
-        lastName: emp.lastName,
-        phone: emp.phone ?? '',
-      });
-      clearProfileState();
-    }
-  }, [emp, reset, clearProfileState]);
-
-  const onSubmit = handleSubmit(async (values) => {
-    if (!userId) return;
-    await handleUpdateProfile({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      phone: values.phone?.trim() || undefined,
-    });
-  });
-
-  const initials = emp ? getInitials(emp.firstName, emp.lastName) : '··';
+function ProfileCard({ loading, emp }: ProfileCardProps) {
+  const displayName = emp
+    ? `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim()
+    : '';
+  const initials =
+    emp && (emp.firstName || emp.lastName)
+      ? getInitials(emp.firstName ?? '', emp.lastName ?? '')
+      : displayName
+        ? displayName.slice(0, 2).toUpperCase()
+        : '··';
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6">
@@ -189,116 +128,43 @@ function ProfileCard({
             />
             <div className="flex-1">
               <div className="font-semibold text-lg">
-                {emp.firstName} {emp.lastName}
+                {displayName || emp.fullName}
+              </div>
+              <div className="text-sm text-slate-600">
+                {emp.email}
               </div>
               <div className="text-sm text-slate-600">
                 {emp.designation} · {emp.department}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                Joined {formatDate(emp.joiningDate)}
+                Joined on {formatDate(emp.joiningDate)}
               </div>
-            </div>
-            <button
-              type="button"
-              className="px-3 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 inline-flex items-center gap-1.5"
-              onClick={() =>
-                window.alert(
-                  'Photo upload is a stretch goal for v2 — using initials chip for now.',
-                )
-              }
-            >
-              <Upload className="w-4 h-4" aria-hidden="true" /> Upload photo
-            </button>
-          </>
-        )}
-      </div>
-
-      {profileSaveError && (
-        <div
-          role="alert"
-          className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
-        >
-          <AlertCircle
-            className="w-4 h-4 mt-0.5 flex-none"
-            aria-hidden="true"
-          />
-          <span>{profileSaveError}</span>
-        </div>
-      )}
-      {profileSaved && (
-        <div
-          role="status"
-          className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
-        >
-          <CheckCircle2
-            className="w-4 h-4 mt-0.5 flex-none"
-            aria-hidden="true"
-          />
-          <span>Profile updated.</span>
-        </div>
-      )}
-
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <Field
-            id="firstName"
-            label="First name"
-            error={errors.firstName?.message}
-            {...register('firstName')}
-          />
-          <Field
-            id="lastName"
-            label="Last name"
-            error={errors.lastName?.message}
-            {...register('lastName')}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium mb-1"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            value={emp?.email ?? ''}
-            readOnly
-            className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md text-slate-500"
-          />
-          <p className="text-xs text-slate-500 mt-1">
-            Email is managed by HR.{' '}
+              <p className="text-xs text-slate-500 mt-1">
+            Profile details are managed by HR.{' '}
             <a
-              href="mailto:hr@company.com"
+              href="mailto:hrconnect42@gmail.com"
               className="text-brand-600 hover:underline"
             >
               Contact HR
             </a>{' '}
             to change.
           </p>
+            </div>
+            
+          </>
+          
+        )}
+      </div>
+
+      {emp && (
+        <div className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+           
+          </div>
+         
+         
         </div>
-        <Field
-          id="phone"
-          label="Phone"
-          placeholder="+91 …"
-          error={errors.phone?.message}
-          {...register('phone')}
-        />
-        <div className="flex justify-end pt-2 border-t border-slate-100">
-          <button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-60"
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Check className="w-4 h-4" aria-hidden="true" />
-            )}{' '}
-            Save changes
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
 }
@@ -422,7 +288,7 @@ function PasswordCard({
             ) : (
               <KeyRound className="w-4 h-4" aria-hidden="true" />
             )}{' '}
-            Update password
+            Change password
           </button>
         </div>
       </form>

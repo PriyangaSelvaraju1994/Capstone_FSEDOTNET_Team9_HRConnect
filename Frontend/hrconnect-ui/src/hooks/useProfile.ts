@@ -70,6 +70,7 @@ export function useProfile(options: UseProfileOptions) {
     async (data: PasswordFormValues) => {
       await dispatch(
         changePassword({
+          employeeId: userId,
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
         }),

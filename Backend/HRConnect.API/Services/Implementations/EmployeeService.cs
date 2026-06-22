@@ -90,9 +90,9 @@ public class EmployeeService : IEmployeeService
         var employee = new Employee
         {
             UserId = request.UserId,
-            Department = request.Department.Trim(),
-            Designation = request.Designation.Trim(),
-            JoiningDate = request.JoiningDate,
+            // Department = request.Department.Trim(),
+            // Designation = request.Designation.Trim(),
+            // JoiningDate = request.JoiningDate,
             IsActive = false // New employees are inactive by default until HR activates them after verification
         };
         _context.Employees.Add(employee);
@@ -105,9 +105,9 @@ public class EmployeeService : IEmployeeService
         {
             Id = employee.Id,
             UserId = employee.UserId,
-            Department = employee.Department,
-            Designation = employee.Designation,
-            JoiningDate = employee.JoiningDate,
+            // Department = employee.Department,
+            // Designation = employee.Designation,
+            // JoiningDate = employee.JoiningDate,
             Email = employee.User != null ? employee.User.Email : string.Empty,
             IsActive = employee.IsActive
         };
