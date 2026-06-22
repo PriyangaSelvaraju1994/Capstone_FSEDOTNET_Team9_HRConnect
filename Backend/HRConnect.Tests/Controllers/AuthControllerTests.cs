@@ -73,9 +73,6 @@ public class AuthControllerTests : IDisposable
             {
                 Id = 1,
                 UserId = 1,
-                Department = request.Department,
-                Designation = request.Designation,
-                JoiningDate = request.DateOfJoining
             });
         // Act
         var result = await _controller.Register(request);
