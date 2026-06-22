@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchEmployees,
@@ -42,11 +42,45 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
   const loading = list.status === 'loading';
   const error = list.status === 'failed' ? list.error : null;
 
-  // One-time: warm filter options and badge
+  const normalizedSearch = searchState.debouncedSearch.trim().toLowerCase();
+
+  const filteredEmployees = useMemo(() => {
+    return list.items.filter((employee) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        employee.fullName.toLowerCase().includes(normalizedSearch) ||
+        employee.email.toLowerCase().includes(normalizedSearch);
+
+      const matchesDepartment =
+        filterState.filters.department === 'All' ||
+        employee.department === filterState.filters.department;
+
+      const matchesDesignation =
+        filterState.filters.designation === 'All' ||
+        employee.designation === filterState.filters.designation;
+
+      return matchesSearch && matchesDepartment && matchesDesignation;
+    });
+  }, [
+    list.items,
+    normalizedSearch,
+    filterState.filters.department,
+    filterState.filters.designation,
+  ]);
+
+  const totalCount = filteredEmployees.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
+
   useEffect(() => {
-    // void dispatch(fetchDesignations());
-    // void dispatch(fetchPendingCount());
-  }, [dispatch]);
+    if (pagination.page > totalPages) {
+      pagination.setPage(totalPages);
+    }
+  }, [pagination, totalPages]);
+
+  const employees = useMemo(() => {
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return filteredEmployees.slice(start, start + pagination.pageSize);
+  }, [filteredEmployees, pagination.page, pagination.pageSize]);
 
   // Fetch directory whenever search/filter/page changes
   useEffect(() => {
@@ -121,17 +155,25 @@ export function useEmployeesList(options: UseEmployeesListOptions = {}) {
     pagination.resetPage();
   }, [filterState, pagination]);
 
+  const setSearch = useCallback(
+    (value: string) => {
+      searchState.setSearch(value);
+      pagination.resetPage();
+    },
+    [searchState, pagination],
+  );
+
   return {
     // Data
-    employees: list.items,
-    totalCount: list.total,
+    employees,
+    totalCount,
     loading,
     error,
     pendingCount,
 
     // Search
     search: searchState.search,
-    setSearch: searchState.setSearch,
+    setSearch,
     clearSearch: searchState.clearSearch,
 
     // Filters

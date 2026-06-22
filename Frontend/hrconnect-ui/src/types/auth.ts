@@ -21,9 +21,6 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
-  joiningDate: string;
-  department: Department;
-  designation: Designation;
 }
 
 export interface RegisterResponse {

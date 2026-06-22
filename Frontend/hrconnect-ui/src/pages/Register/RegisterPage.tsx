@@ -7,62 +7,50 @@ import {
   AlertCircle,
   Building2,
   Check,
-  ChevronDown,
   Loader2,
   UserPlus,
 } from 'lucide-react';
 import { useAppDispatch } from '../../store/hooks';
 import { registerThunk } from '../../store/slices/authSlice';
 import { useAuth } from '../../hooks/useAuth';
-import type { Department, Designation } from '../../types/auth';
 import { scorePassword, strengthLabel } from '../../utils/passwordStrength';
 
-const DEPARTMENTS = ['IT', 'QE', 'Sales', 'HR'] as const satisfies readonly Department[];
-const DESIGNATIONS = [
-  'Software Engineer',
-  'QA',
-  'Finance',
-  'Engineer',
-  'Architect',
-] as const satisfies readonly Designation[];
-
-const schema = z.object({
-  firstName: z
-    .string()
-    .trim()
-    .min(1, 'First name is required')
-    .max(50, 'First name must be at most 50 characters')
-    .regex(/^[A-Za-z]+$/, 'First name can only contain letters'),
-  lastName: z
-    .string()
-    .trim()
-    .min(1, 'Last name is required')
-    .max(50, 'Last name must be at most 50 characters')
-    .regex(/^[A-Za-z]+$/, 'Last name can only contain letters'),
-  joiningDate: z.string().min(1, 'Joining date is required'),
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Enter a valid email like name@apexon.com')
-    .refine(
-      (value) => value.toLowerCase().endsWith('@apexon.com'),
-      'Email must end with @apexon.com',
-    ),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(64, 'Password must be at most 64 characters')
-    .regex(/[A-Z]/, 'Add at least one uppercase letter')
-    .regex(/[0-9]/, 'Add at least one digit'),
-  department: z.enum(DEPARTMENTS),
-  designation: z.enum(DESIGNATIONS),
-});
+const schema = z
+  .object({
+    firstName: z
+      .string()
+      .trim()
+      .min(1, 'First name is required')
+      .max(50, 'First name must be at most 50 characters')
+      .regex(/^[A-Za-z]+$/, 'First name can only contain letters'),
+    lastName: z
+      .string()
+      .trim()
+      .min(1, 'Last name is required')
+      .max(50, 'Last name must be at most 50 characters')
+      .regex(/^[A-Za-z]+$/, 'Last name can only contain letters'),
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Enter a valid email like name@apexon.com')
+      .refine(
+        (value) => value.toLowerCase().endsWith('@apexon.com'),
+        'Email must end with @apexon.com',
+      ),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(64, 'Password must be at most 64 characters')
+      .regex(/[A-Z]/, 'Add at least one uppercase letter')
+      .regex(/[0-9]/, 'Add at least one digit'),
+    confirmPassword: z.string().min(1, 'Confirm password is required'),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
 
 type FormValues = z.infer<typeof schema>;
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const allowedNameKeys = [
   'Backspace',
@@ -112,11 +100,9 @@ export default function RegisterPage() {
     defaultValues: {
       firstName: '',
       lastName: '',
-        joiningDate: today(),
       email: '',
       password: '',
-      department: 'IT',
-      designation: 'Software Engineer',
+      confirmPassword: '',
     },
   });
 
@@ -132,8 +118,8 @@ export default function RegisterPage() {
   }
 
   const onSubmit = handleSubmit(async (values) => {
-    const { firstName, lastName, ...rest } = values; // to satisfy exhaustiveness checking
-    const fullName = `${firstName} ${lastName}`;
+    const { firstName, lastName, confirmPassword: _confirmPassword, ...rest } = values;
+    const fullName = `${firstName} ${lastName}`.trim().replace(/\s+/g, ' ');
     const result = await dispatch(registerThunk({ ...rest, fullName })).unwrap();
     navigate('/login', {
       replace: true,
@@ -193,8 +179,7 @@ export default function RegisterPage() {
                     onPaste={preventNonAlphabetPaste}
                     aria-invalid={Boolean(errors.firstName)}
                     aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.firstName ? 'border-rose-400' : 'border-slate-300'
-                      }`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.firstName ? 'border-rose-400' : 'border-slate-300'}`}
                     {...register('firstName')}
                   />
                   {errors.firstName && (
@@ -215,8 +200,7 @@ export default function RegisterPage() {
                     onPaste={preventNonAlphabetPaste}
                     aria-invalid={Boolean(errors.lastName)}
                     aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.lastName ? 'border-rose-400' : 'border-slate-300'
-                      }`}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.lastName ? 'border-rose-400' : 'border-slate-300'}`}
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -228,26 +212,6 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                  <label htmlFor="joiningDate" className="block text-sm font-medium mb-1">
-                    Joining date
-                  </label>
-                  <input
-                    id="joiningDate"
-                    type="date"
-                    max={today()}
-                    aria-invalid={Boolean(errors.joiningDate)}
-                    aria-describedby={errors.joiningDate ? 'joiningDate-error' : undefined}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.joiningDate ? 'border-rose-400' : 'border-slate-300'}`}
-                    {...register('joiningDate')}
-                  />
-                  {errors.joiningDate && (
-                    <p id="joiningDate-error" className="text-xs text-rose-600 mt-1">
-                      {errors.joiningDate.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1">
                   Work email
                 </label>
@@ -257,8 +221,7 @@ export default function RegisterPage() {
                   autoComplete="email"
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'email-error' : undefined}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.email ? 'border-rose-400' : 'border-slate-300'
-                    }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.email ? 'border-rose-400' : 'border-slate-300'}`}
                   {...register('email')}
                 />
                 {errors.email && (
@@ -277,11 +240,8 @@ export default function RegisterPage() {
                   type="password"
                   autoComplete="new-password"
                   aria-invalid={Boolean(errors.password)}
-                  aria-describedby={
-                    errors.password ? 'password-error' : 'password-strength'
-                  }
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.password ? 'border-rose-400' : 'border-slate-300'
-                    }`}
+                  aria-describedby={errors.password ? 'password-error' : 'password-strength'}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.password ? 'border-rose-400' : 'border-slate-300'}`}
                   placeholder="At least 8 characters"
                   {...register('password')}
                 />
@@ -302,50 +262,26 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="department" className="block text-sm font-medium mb-1">
-                  Department
+                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                  Confirm password
                 </label>
-                <div className="relative">
-                  <select
-                    id="department"
-                    className="w-full appearance-none px-3 py-2 border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    {...register('department')}
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="w-4 h-4 absolute right-3 top-3 text-slate-400 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                </div>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.confirmPassword ? 'border-rose-400' : 'border-slate-300'}`}
+                  placeholder="Re-enter your password"
+                  {...register('confirmPassword')}
+                />
+                {errors.confirmPassword && (
+                  <p id="confirmPassword-error" className="text-xs text-rose-600 mt-1">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
 
-              <div>
-                <label htmlFor="designation" className="block text-sm font-medium mb-1">
-                  Designation
-                </label>
-                <div className="relative">
-                  <select
-                    id="designation"
-                    className="w-full appearance-none px-3 py-2 border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    {...register('designation')}
-                  >
-                    {DESIGNATIONS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="w-4 h-4 absolute right-3 top-3 text-slate-400 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                </div>
-              </div>
               <button
                 type="submit"
                 disabled={submitting}
@@ -356,7 +292,7 @@ export default function RegisterPage() {
                 ) : (
                   <Check className="w-4 h-4" aria-hidden="true" />
                 )}
-                {submitting ? 'Creating account…' : 'Create account'}
+                {submitting ? 'Creating account...' : 'Create account'}
               </button>
             </form>
 
