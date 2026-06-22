@@ -16,7 +16,7 @@ import type {
   Employee,
   EmployeeFormValues,
   EmployeeListParams,
-  EmployeeListResult,
+  EmployeeResult,
 } from '../../types/employee';
 import { toMessage, type AsyncStatus } from '../asyncStatus';
 
@@ -24,7 +24,7 @@ import { toMessage, type AsyncStatus } from '../asyncStatus';
 
 export interface EmployeesState {
   list: {
-    items: Employee[];
+    items: EmployeeResult[];
     total: number;
     page: number;
     pageSize: number;
@@ -37,7 +37,7 @@ export interface EmployeesState {
     status: AsyncStatus;
   };
   byId: {
-    entries: Record<number, Employee>;
+    entries: Record<number, EmployeeResult>;
     status: AsyncStatus;
     error: string | null;
     /** Discriminates between "haven't fetched" and "fetched but 404". */
@@ -76,7 +76,7 @@ const initialState: EmployeesState = {
 // --- Thunks ----------------------------------------------------------------
 
 export const fetchEmployees = createAsyncThunk<
-  EmployeeListResult,
+  EmployeeResult[],
   EmployeeListParams,
   { rejectValue: string }
 >('employees/fetchList', async (params, { rejectWithValue }) => {
@@ -87,18 +87,6 @@ export const fetchEmployees = createAsyncThunk<
   }
 });
 
-export const fetchDesignations = createAsyncThunk<
-  string[],
-  void,
-  { rejectValue: string }
->('employees/fetchDesignations', async (_, { rejectWithValue }) => {
-  try {
-    return await employeesApi.listDesignations();
-  } catch (err) {
-    return rejectWithValue(toMessage(err));
-  }
-});
-
 export interface FetchEmployeeRejection {
   message: string;
   notFound: boolean;
@@ -106,7 +94,7 @@ export interface FetchEmployeeRejection {
 }
 
 export const fetchEmployeeById = createAsyncThunk<
-  Employee,
+  EmployeeResult,
   number,
   { rejectValue: FetchEmployeeRejection }
 >('employees/fetchById', async (id, { rejectWithValue }) => {
@@ -192,28 +180,16 @@ const employeesSlice = createSlice({
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.list.status = 'succeeded';
-        state.list.items = action.payload.items;
-        state.list.total = action.payload.total;
-        state.list.page = action.payload.page;
-        state.list.pageSize = action.payload.pageSize;
+        state.list.items = action.payload;
+        state.list.total = action.payload.length;
+        // state.list.page = action.payload.page;
+        // state.list.pageSize = action.payload.pageSize;
         // Keep the byId cache warm so navigating to detail is instant.
-        for (const e of action.payload.items) state.byId.entries[e.id] = e;
+        for (const e of action.payload) state.byId.entries[e.id] = e;
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.list.status = 'failed';
         state.list.error = action.payload ?? 'Could not load employees.';
-      })
-
-      // --- fetchDesignations
-      .addCase(fetchDesignations.pending, (state) => {
-        state.designations.status = 'loading';
-      })
-      .addCase(fetchDesignations.fulfilled, (state, action) => {
-        state.designations.status = 'succeeded';
-        state.designations.items = action.payload;
-      })
-      .addCase(fetchDesignations.rejected, (state) => {
-        state.designations.status = 'failed';
       })
 
       // --- fetchEmployeeById
@@ -252,19 +228,19 @@ const employeesSlice = createSlice({
       })
 
       // --- create/update success: refresh the cache entry
-      .addCase(createEmployee.fulfilled, (state, action) => {
-        state.mutation.status = 'succeeded';
-        state.byId.entries[action.payload.id] = action.payload;
-      })
-      .addCase(updateEmployee.fulfilled, (state, action) => {
-        state.mutation.status = 'succeeded';
-        state.byId.entries[action.payload.id] = action.payload;
-        // Patch the row in the open list page if present.
-        const idx = state.list.items.findIndex(
-          (e) => e.id === action.payload.id,
-        );
-        if (idx !== -1) state.list.items[idx] = action.payload;
-      })
+      // .addCase(createEmployee.fulfilled, (state, action) => {
+      //   state.mutation.status = 'succeeded';
+      //   state.byId.entries[action.payload.id] = action.payload;
+      // })
+      // .addCase(updateEmployee.fulfilled, (state, action) => {
+      //   state.mutation.status = 'succeeded';
+      //   state.byId.entries[action.payload.id] = action.payload;
+      //   // Patch the row in the open list page if present.
+      //   const idx = state.list.items.findIndex(
+      //     (e) => e.id === action.payload.id,
+      //   );
+      //   if (idx !== -1) state.list.items[idx] = action.payload;
+      // })
 
       // --- Mutations: shared pending/rejected handling
       .addMatcher(

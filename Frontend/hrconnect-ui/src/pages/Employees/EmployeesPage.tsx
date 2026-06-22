@@ -21,13 +21,21 @@ const DEPARTMENTS: Array<Department | 'All'> = [
   'HR',
 ];
 
+const DESIGNATIONS: Array<Designation | 'All'> = [
+  'All',
+  'Software Engineer',
+  'QA',
+  'Finance',
+  'Engineer',
+  'Architect'
+];
+
 export default function EmployeesPage() {
   const {
     employees,
     totalCount,
     loading,
     error,
-    designations,
     pendingCount,
     search,
     setSearch,
@@ -81,8 +89,8 @@ export default function EmployeesPage() {
           <SelectFilter
             label="Designation"
             value={designation}
-            options={['All', ...designations]}
-             onChange={(v) => setDesignation(v as Designation | 'All')}
+            options={DESIGNATIONS}
+            onChange={(v) => setDesignation(v as Designation | 'All')}
           />
         </div>
       </div>
@@ -166,7 +174,7 @@ export default function EmployeesPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {employees.map((emp) => {
-                  const initials = getInitials(emp.firstName, emp.lastName);
+                  const initials = getInitials(emp.fullName ?? '', '') || '··';
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3">
@@ -179,7 +187,7 @@ export default function EmployeesPage() {
                             to={`/employees/${emp.id}`}
                             className="font-medium hover:text-brand-700"
                           >
-                            {emp.firstName} {emp.lastName}
+                            {emp.fullName}
                           </Link>
                         </div>
                       </td>
@@ -193,7 +201,7 @@ export default function EmployeesPage() {
                       <td className="px-5 py-3 text-right">
                         <Link
                           to={`/employees/${emp.id}`}
-                          aria-label={`Open ${emp.firstName} ${emp.lastName}`}
+                          aria-label={`Open ${emp.fullName}`}
                           className="inline-flex p-1.5 rounded hover:bg-slate-100"
                         >
                           <MoreHorizontal

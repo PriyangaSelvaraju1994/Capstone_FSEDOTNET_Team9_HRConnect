@@ -7,7 +7,8 @@
 import { http } from './client';
 import type {
   EmployeeDashboardData,
-  HrDashboardData,
+  HrActivityEntry,
+  HrDashboardSummary,
 } from '../types/leave';
 
 export const dashboardApi = {
@@ -16,7 +17,10 @@ export const dashboardApi = {
       .get<EmployeeDashboardData[]>(`/leaves/leavebalances/${userId}`)
       .then((r) => r.data),
 
-  getHrDashboard: (): Promise<HrDashboardData> =>
-    http.get<HrDashboardData>('/hr/dashboard').then((r) => r.data),
+  getHrDashboard: (): Promise<HrDashboardSummary> =>
+    http.get<HrDashboardSummary>('/dashboard/dashboard-summary').then((r) => r.data),
+
+  getHrDashboardRecent: (): Promise<HrActivityEntry[]> =>
+    http.get<HrActivityEntry[]>('/dashboard/recent-activities').then((r) => r.data),
 };
 

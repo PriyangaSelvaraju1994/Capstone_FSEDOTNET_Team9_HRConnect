@@ -71,7 +71,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     if (!emp) return;
 
     const confirmed = await confirm({
-      message: `Delete ${emp.firstName} ${emp.lastName}? This cannot be undone.`,
+      message: `Delete ${emp.fullName}? This cannot be undone.`,
     });
     if (!confirmed) return;
 
