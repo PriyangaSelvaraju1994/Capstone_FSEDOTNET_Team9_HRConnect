@@ -22,6 +22,7 @@ export function useAdminQueue() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
   const [selectedBalances, setSelectedBalances] = useState<LeaveBalance[]>([]);
+  const [successMessage, setSuccessMessage] = useState<'approved' | 'rejected' | null>(null);
 
   const data = queue.items;
   const loading = queue.status === 'loading' && data.length === 0;
@@ -83,32 +84,6 @@ export function useAdminQueue() {
     );
   }, [selected, selectedBalances]);
 
-  const handleApprove = useCallback(async () => {
-    if (!selected) return;
-    setBusy('approve');
-    try {
-      await dispatch(approveLeave(selected.id)).unwrap();
-      refetch();
-    } catch {
-      // Error surfaced via mutation
-    } finally {
-      setBusy(null);
-    }
-  }, [selected, dispatch, refetch]);
-
-  const handleReject = useCallback(async () => {
-    if (!selected) return;
-    setBusy('reject');
-    try {
-      await dispatch(rejectLeave(selected.id)).unwrap();
-      refetch();
-    } catch {
-      // Error surfaced via mutation
-    } finally {
-      setBusy(null);
-    }
-  }, [selected, dispatch, refetch]);
-
   const selectNext = useCallback(() => {
     const idx = data.findIndex((r) => r.id === selectedId);
     if (idx >= 0 && idx < data.length - 1) {
@@ -122,6 +97,42 @@ export function useAdminQueue() {
       setSelectedId(data[idx - 1].id);
     }
   }, [data, selectedId]);
+
+  const handleApprove = useCallback(async () => {
+    if (!selected) return;
+    setBusy('approve');
+    try {
+      await dispatch(approveLeave(selected.id)).unwrap();
+      setSuccessMessage('approved');
+      refetch();
+      setTimeout(() => {
+        setSuccessMessage(null);
+        selectNext();
+      }, 2000);
+    } catch {
+      // Error surfaced via mutation
+    } finally {
+      setBusy(null);
+    }
+  }, [selected, dispatch, refetch, selectNext]);
+
+  const handleReject = useCallback(async () => {
+    if (!selected) return;
+    setBusy('reject');
+    try {
+      await dispatch(rejectLeave(selected.id)).unwrap();
+      setSuccessMessage('rejected');
+      refetch();
+      setTimeout(() => {
+        setSuccessMessage(null);
+        selectNext();
+      }, 2000);
+    } catch {
+      // Error surfaced via mutation
+    } finally {
+      setBusy(null);
+    }
+  }, [selected, dispatch, refetch, selectNext]);
 
   return {
     // Data
@@ -143,6 +154,7 @@ export function useAdminQueue() {
 
     // Actions
     busy,
+    successMessage,
     handleApprove,
     handleReject,
     refetch,

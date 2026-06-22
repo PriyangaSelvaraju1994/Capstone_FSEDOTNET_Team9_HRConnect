@@ -13,7 +13,7 @@ import type {
 
 export const employeesApi = {
   list: (params: EmployeeListParams = {}): Promise<EmployeeResult[]> => {
-    const requestParams: Record<string, string | number> = {};
+    const requestParams: Record<string, string | number | boolean> = {};
 
     if (params.search?.trim()) {
       requestParams.search = params.search.trim();
@@ -23,6 +23,9 @@ export const employeesApi = {
     }
     if (params.designation && params.designation !== 'All') {
       requestParams.designation = params.designation;
+    }
+    if (params.status && params.status !== 'All') {
+      requestParams.isActive = params.status === 'Active';
     }
 
     return http

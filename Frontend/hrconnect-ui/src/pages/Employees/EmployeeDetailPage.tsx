@@ -1,5 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom';
-import { Briefcase, Building, Loader2, Mail, Pencil, Trash2 } from 'lucide-react';
+import { Briefcase, Building, Loader2, Mail, Pencil, Trash2, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
@@ -26,6 +26,7 @@ export default function EmployeeDetailPage() {
     empError,
     isNotFound,
     deleting,
+    deleteSuccess,
     balances,
     balancesLoading,
     history,
@@ -55,7 +56,17 @@ export default function EmployeeDetailPage() {
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+      {deleteSuccess && (
+        <div
+          role="status"
+          className="mb-4 flex items-center gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
+        >
+          <CheckCircle2 className="w-4 h-4 flex-none" aria-hidden="true" />
+          <span>Employee deleted successfully. Redirecting…</span>
+        </div>
+      )}
+
+      <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6 opacity-50" style={{ pointerEvents: deleteSuccess ? 'none' : 'auto' }}>
         {empLoading || !emp ? (
           <div className="animate-pulse flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-slate-200" />

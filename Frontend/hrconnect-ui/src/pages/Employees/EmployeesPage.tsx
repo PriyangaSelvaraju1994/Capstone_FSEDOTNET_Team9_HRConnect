@@ -9,6 +9,7 @@ import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 import { useEmployeesList } from '../../hooks/useEmployeesList';
 import type { Department, Designation } from '../../types/auth';
+import type { EmployeeStatusFilter } from '../../types/employee';
 import { range } from '../../utils/array';
 import { getAvatarClassName } from '../../utils/avatarColor';
 import { getInitials } from '../../utils/user';
@@ -30,6 +31,8 @@ const DESIGNATIONS: Array<Designation | 'All'> = [
   'Architect'
 ];
 
+const STATUSES: EmployeeStatusFilter[] = ['All', 'Active', 'Inactive'];
+
 export default function EmployeesPage() {
   const {
     employees,
@@ -40,8 +43,10 @@ export default function EmployeesPage() {
     setSearch,
     department,
     designation,
+    status,
     setDepartment,
     setDesignation,
+    setStatus,
     activeFilters,
     clearAllFilters,
     page,
@@ -84,6 +89,13 @@ export default function EmployeesPage() {
             value={designation}
             options={DESIGNATIONS}
             onChange={(v) => setDesignation(v as Designation | 'All')}
+          />
+          <SelectFilter
+            label="Status"
+            value={status}
+            options={STATUSES}
+            allLabel="All statuses"
+            onChange={(v) => setStatus(v as EmployeeStatusFilter)}
           />
         </div>
       </div>
@@ -240,10 +252,11 @@ interface SelectFilterProps {
   label: string;
   value: string;
   options: string[];
+  allLabel?: string;
   onChange: (next: string) => void;
 }
 
-function SelectFilter({ label, value, options, onChange }: SelectFilterProps) {
+function SelectFilter({ label, value, options, allLabel, onChange }: SelectFilterProps) {
   return (
     <div className="relative">
       <select
@@ -254,7 +267,7 @@ function SelectFilter({ label, value, options, onChange }: SelectFilterProps) {
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
-            {opt === 'All' ? `All ${label.toLowerCase()}s` : opt}
+            {opt === 'All' ? (allLabel ?? `All ${label.toLowerCase()}s`) : opt}
           </option>
         ))}
       </select>

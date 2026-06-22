@@ -29,6 +29,7 @@ export default function AdminQueuePage() {
     selected,
     preview,
     busy,
+    successMessage,
     handleApprove,
     handleReject,
     refetch,
@@ -225,6 +226,7 @@ export default function AdminQueuePage() {
               onApprove={handleApprove}
               onReject={handleReject}
               busy={busy}
+              successMessage={successMessage}
             />
           </div>
         )}

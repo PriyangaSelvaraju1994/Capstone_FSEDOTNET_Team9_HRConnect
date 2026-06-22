@@ -1,6 +1,7 @@
 import type { Department, Designation } from './auth';
 
 export type EmployeeRole = 'Employee' | 'HR Admin';
+export type EmployeeStatusFilter = 'All' | 'Active' | 'Inactive';
 
 export interface Employee {
   id: number;
@@ -23,6 +24,7 @@ export interface EmployeeListParams {
   search?: string;
   department?: Department | 'All';
   designation?: string | 'All';
+  status?: EmployeeStatusFilter;
   page?: number;
   pageSize?: number;
 }

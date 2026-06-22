@@ -29,6 +29,7 @@ export interface UseEmployeeDetailOptions {
 export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const { employeeId, historyPageSize = 10 } = options;
   const [deleting, setDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const navigate = useNavigate();
   const { confirm } = useConfirmDialog();
 
@@ -76,10 +77,10 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     setDeleting(true);
     try {
       await dispatch(deleteEmployee(emp.id)).unwrap();
-      navigate('/employees');
+      setDeleteSuccess(true);
+      setTimeout(() => navigate('/employees'), 2000);
     } catch {
       // Error surfaced through slice mutation state
-    } finally {
       setDeleting(false);
     }
   }, [emp, confirm, dispatch, navigate]);
@@ -91,6 +92,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     empError,
     isNotFound,
     deleting,
+    deleteSuccess,
 
     // Related data
     balances,

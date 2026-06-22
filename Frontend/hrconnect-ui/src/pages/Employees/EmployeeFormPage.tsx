@@ -133,6 +133,7 @@ export default function EmployeeFormPage({ mode }: Props) {
   const params = useParams<{ id: string }>();
   const editId = mode === 'edit' ? Number(params.id) : undefined;
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const existing = useAppSelector(selectEmployeeById(editId));
@@ -200,7 +201,12 @@ export default function EmployeeFormPage({ mode }: Props) {
       } else {
         await dispatch(createEmployee(payload)).unwrap();
       }
-      navigate('/employees');
+      
+      const message = isEdit
+        ? 'Employee updated successfully.'
+        : 'Employee saved successfully.';
+      setSuccessMessage(message);
+      setTimeout(() => navigate('/employees'), 2000);
     } catch (e) {
       // The employees slice rejects with { message, field } for known errors.
       const rejection = e as { field?: string | null; message?: string } | string;
@@ -241,6 +247,14 @@ export default function EmployeeFormPage({ mode }: Props) {
       />
 
       <div className="bg-white border border-slate-200 rounded-lg p-6">
+        {successMessage && (
+          <div
+            role="status"
+            className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
+          >
+            <span>{successMessage}</span>
+          </div>
+        )}
         {submitError && (
           <div
             role="alert"

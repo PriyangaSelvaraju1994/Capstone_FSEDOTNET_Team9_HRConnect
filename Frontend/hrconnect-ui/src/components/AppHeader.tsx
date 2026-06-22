@@ -32,7 +32,7 @@ export function AppHeader() {
   const { user, isAdmin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navItems = isAdmin ? buildAdminNav() : EMPLOYEE_NAV;
-  const initials = user ? getInitials(user.firstName ?? '', user.lastName ?? '') : '··';
+  const initials = user ? getInitials(user.firstName ?? '', '') : '··';
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
