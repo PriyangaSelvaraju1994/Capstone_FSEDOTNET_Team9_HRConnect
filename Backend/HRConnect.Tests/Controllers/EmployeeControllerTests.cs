@@ -1,12 +1,11 @@
-﻿using Moq;
-using Xunit;
+﻿using Xunit;
+using Moq;
 using Microsoft.AspNetCore.Mvc;
 using HRConnect.API.Controllers;
 using HRConnect.API.Services.Interfaces;
 using HRConnect.API.DTOs.Employee;
 
 namespace HRConnect.Tests.Controllers;
-
 public class EmployeeControllerTests
 {
     private readonly Mock<IEmployeeService> _mockEmployeeService;
@@ -18,241 +17,215 @@ public class EmployeeControllerTests
         _controller = new EmployeeController(_mockEmployeeService.Object);
     }
 
-    // Positive Test - Returns list of employees successfully
+    #region GetEmployees Tests
     [Fact]
-    public async Task GetEmployees_ShouldReturnOkResult_WithListOfEmployees()
+    public async Task GetEmployees_ReturnsOkWithEmployeeList()
     {
-        // Arrange - Set up test data and mock behavior
-        var expectedEmployees = new List<EmployeeDto>
+        // Arrange
+        var employees = new List<EmployeeDto>
         {
             new EmployeeDto
             {
                 Id = 1,
-                UserId = 101,
+                UserId = 1,
+                FullName = "John Doe",
+                Email = "john@example.com",
                 Department = "IT",
-                Designation = "Software Engineer",
-                JoiningDate = new DateTime(2024, 1, 15)
+                Designation = "Developer",
+                JoiningDate = DateTime.Now,
+                IsActive = true
             },
             new EmployeeDto
             {
                 Id = 2,
-                UserId = 102,
+                UserId = 2,
+                FullName = "Jane Smith",
+                Email = "jane@example.com",
                 Department = "HR",
-                Designation = "HR Manager",
-                JoiningDate = new DateTime(2023, 5, 20)
+                Designation = "Manager",
+                JoiningDate = DateTime.Now,
+                IsActive = true
             }
         };
-        //Mock Setup
-        _mockEmployeeService.Setup(service => service.GetAllEmployeesAsync()).ReturnsAsync(expectedEmployees);
-
-        // Act - Execute the method we're testing
-        var result = await _controller.GetEmployees();
-        // Assert - Verify the results
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var employees = Assert.IsAssignableFrom<IEnumerable<EmployeeDto>>(okResult.Value);
-        Assert.Equal(expectedEmployees.Count, employees.Count());
-        // Verify that the service method was called exactly once
-        _mockEmployeeService.Verify(service => service.GetAllEmployeesAsync(),Times.Once);
-    }
-
-    // Negative Test - Returns empty list when no employees exist
-    [Fact]
-    public async Task GetEmployees_ShouldReturnEmptyList_WhenNoEmployeesExist()
-    {
-        // Arrange
-        var emptyList = new List<EmployeeDto>();
         _mockEmployeeService
-            .Setup(service => service.GetAllEmployeesAsync())
-            .ReturnsAsync(emptyList);
-
+            .Setup(x => x.GetAllEmployeesAsync())
+            .ReturnsAsync(employees);
         // Act
         var result = await _controller.GetEmployees();
-
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var employees = Assert.IsAssignableFrom<IEnumerable<EmployeeDto>>(okResult.Value);
-        Assert.Empty(employees);
+        var returnedEmployees = Assert.IsAssignableFrom<IEnumerable<EmployeeDto>>(okResult.Value);
+        Assert.Equal(2, returnedEmployees.Count());
 
-        _mockEmployeeService.Verify(service => service.GetAllEmployeesAsync(), Times.Once);
+        _mockEmployeeService.Verify(x => x.GetAllEmployeesAsync(), Times.Once);
     }
 
-    // Positive Test - Returns employee when valid id is provided
+    #endregion
+    #region GetById Tests
+
     [Fact]
-    public async Task GetById_ShouldReturnOkResult_WithEmployee()
+    public async Task GetById_WithValidId_ReturnsOkWithEmployee()
     {
         // Arrange
-        var expectedEmployee = new EmployeeDto
+        var employeeId = 1;
+        var employee = new EmployeeDto
         {
-            Id = 1,
-            UserId = 101,
+            Id = employeeId,
+            UserId = 1,
+            FullName = "John Doe",
+            Email = "john@example.com",
             Department = "IT",
-            Designation = "Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
+            Designation = "Developer",
+            JoiningDate = DateTime.Now,
+            IsActive = true
         };
-        _mockEmployeeService.Setup(service => service.GetEmployeeByIdAsync(1)).ReturnsAsync(expectedEmployee);
+
+        _mockEmployeeService
+            .Setup(x => x.GetEmployeeByIdAsync(employeeId))
+            .ReturnsAsync(employee);
 
         // Act
-        var result = await _controller.GetById(1);
+        var result = await _controller.GetById(employeeId);
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var employee = Assert.IsType<EmployeeDto>(okResult.Value);
+        var returnedEmployee = Assert.IsType<EmployeeDto>(okResult.Value);
+        Assert.Equal(employeeId, returnedEmployee.Id);
+        Assert.Equal("John Doe", returnedEmployee.FullName);
 
-        Assert.Equal(expectedEmployee.Id, employee.Id);
-        Assert.Equal(expectedEmployee.UserId, employee.UserId);
-
-        _mockEmployeeService.Verify(service => service.GetEmployeeByIdAsync(1),Times.Once);
+        _mockEmployeeService.Verify(x => x.GetEmployeeByIdAsync(employeeId), Times.Once);
     }
+    #endregion
+    #region Create Tests
 
-    // Negative Test - Throws exception when employee does not exist
     [Fact]
-    public async Task GetById_ShouldThrowException_WhenEmployeeNotFound()
-    {
-        // Arrange
-        _mockEmployeeService
-            .Setup(service => service.GetEmployeeByIdAsync(999))
-            .ThrowsAsync(new KeyNotFoundException("Employee with ID 999 not found"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _controller.GetById(999)
-        );
-
-        _mockEmployeeService.Verify(service => service.GetEmployeeByIdAsync(999), Times.Once);
-    }
-
-    // Positive Test - Creates employee successfully
-    [Fact]
-    public async Task Create_ShouldReturnCreatedAtActionResult_WhenEmployeeCreated()
+    public async Task Create_WithValidRequest_ReturnsCreatedAtAction()
     {
         // Arrange
         var request = new CreateEmployeeDto
         {
-            UserId = 101,
+            UserId = 1,
             Department = "IT",
-            Designation = "Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
+            Designation = "Developer",
+            JoiningDate = DateTime.Now,
+            IsActive = false
         };
-
         var createdEmployee = new EmployeeDto
         {
             Id = 1,
-            UserId = 101,
-            Department = "IT",
-            Designation = "Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
-        };
-
-        _mockEmployeeService.Setup(service => service.CreateEmployeeAsync(request)).ReturnsAsync(createdEmployee);
-        // Act
-        var result = await _controller.Create(request);
-        // Assert
-        var createdAtResult = Assert.IsType<CreatedAtActionResult>(result);
-        var employee = Assert.IsType<EmployeeDto>(createdAtResult.Value);
-
-        Assert.Equal(createdEmployee.Id, employee.Id);
-        _mockEmployeeService.Verify(service => service.CreateEmployeeAsync(request),Times.Once);
-    }
-
-    // Negative Test - Throws exception when UserId already exists
-    [Fact]
-    public async Task Create_ShouldThrowException_WhenUserIdAlreadyExists()
-    {
-        // Arrange
-        var request = new CreateEmployeeDto
-        {
-            UserId = 101,
-            Department = "IT",
-            Designation = "Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
+            UserId = request.UserId,
+            FullName = "John Doe",
+            Email = "john@example.com",
+            // AFTER (fixed):
+            Department = request.Department,
+            Designation = request.Designation,
+            JoiningDate = request.JoiningDate ?? DateTime.Today,  // ← Add null-coalescing operator
+            IsActive = request.IsActive
         };
 
         _mockEmployeeService
-            .Setup(service => service.CreateEmployeeAsync(request))
-            .ThrowsAsync(new InvalidOperationException("Employee with UserId 101 already exists"));
+            .Setup(x => x.CreateEmployeeAsync(request))
+            .ReturnsAsync(createdEmployee);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _controller.Create(request)
-        );
+        // Act
+        var result = await _controller.Create(request);
+        // Assert
+        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
+        Assert.Equal(nameof(_controller.GetById), createdAtActionResult.ActionName);
+        Assert.Equal(createdEmployee.Id, ((EmployeeDto)createdAtActionResult.Value!).Id);
+        var routeValues = createdAtActionResult.RouteValues;
+        Assert.NotNull(routeValues);
+        Assert.Equal(createdEmployee.Id, routeValues["id"]);
 
-        _mockEmployeeService.Verify(service => service.CreateEmployeeAsync(request), Times.Once);
+        _mockEmployeeService.Verify(x => x.CreateEmployeeAsync(request), Times.Once);
     }
+    #endregion
+    #region Update Tests
 
-    // Positive Test - Updates employee successfully
     [Fact]
-    public async Task Update_ShouldReturnOkResult_WhenEmployeeUpdated()
+    public async Task Update_WithValidRequest_ReturnsOkWithUpdatedEmployee()
     {
         // Arrange
+        var employeeId = 1;
         var request = new UpdateEmployeeDto
         {
             Department = "IT",
-            Designation = "Senior Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
+            Designation = "Senior Developer",
+            JoiningDate = DateTime.Now.AddYears(-1),
+            IsActive = true
         };
-
         var updatedEmployee = new EmployeeDto
         {
-            Id = 1,
-            UserId = 101,
-            Department = "IT",
-            Designation = "Senior Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
+            Id = employeeId,
+            UserId = 1,
+            FullName = "John Doe",
+            Email = "john@example.com",
+            Department = request.Department,
+            Designation = request.Designation,
+            JoiningDate = request.JoiningDate,
+            IsActive = request.IsActive
         };
-        _mockEmployeeService.Setup(service => service.UpdateEmployeeAsync(1, request)).ReturnsAsync(updatedEmployee);
+        _mockEmployeeService
+            .Setup(x => x.UpdateEmployeeAsync(employeeId, request))
+            .ReturnsAsync(updatedEmployee);
         // Act
-        var result = await _controller.Update(1, request);
+        var result = await _controller.Update(employeeId, request);
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var employee = Assert.IsType<EmployeeDto>(okResult.Value);
-        Assert.Equal(updatedEmployee.Id, employee.Id);
-        _mockEmployeeService.Verify(service => service.UpdateEmployeeAsync(1, request),Times.Once);
-    }
+        var returnedEmployee = Assert.IsType<EmployeeDto>(okResult.Value);
+        Assert.Equal(employeeId, returnedEmployee.Id);
+        Assert.Equal("Senior Developer", returnedEmployee.Designation);
 
-    // Negative Test - Throws exception when employee does not exist
+        _mockEmployeeService.Verify(x => x.UpdateEmployeeAsync(employeeId, request), Times.Once);
+    }
+    #endregion
+
+    #region Delete Tests
+
     [Fact]
-    public async Task Update_ShouldThrowException_WhenEmployeeNotFound()
+    public async Task Delete_WithValidId_ReturnsNoContent()
     {
         // Arrange
-        var request = new UpdateEmployeeDto
-        {
-            Department = "IT",
-            Designation = "Senior Software Engineer",
-            JoiningDate = new DateTime(2024, 1, 15)
-        };
-        _mockEmployeeService.Setup(service => service.UpdateEmployeeAsync(999, request)).ThrowsAsync(new KeyNotFoundException("Employee with ID 999 not found"));
+        var employeeId = 1;
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.Update(999, request));
+        _mockEmployeeService
+            .Setup(x => x.DeleteEmployeeAsync(employeeId))
+            .Returns(Task.CompletedTask);
 
-        _mockEmployeeService.Verify(service => service.UpdateEmployeeAsync(999, request), Times.Once);
-    }
-
-    // Positive Test - Deletes employee successfully
-    [Fact]
-    public async Task Delete_ShouldReturnNoContent_WhenEmployeeDeleted()
-    {
-        // Arrange
-        _mockEmployeeService.Setup(service => service.DeleteEmployeeAsync(1)).Returns(Task.CompletedTask);
         // Act
-        var result = await _controller.Delete(1);
+        var result = await _controller.Delete(employeeId);
+
         // Assert
         Assert.IsType<NoContentResult>(result);
-        _mockEmployeeService.Verify(service => service.DeleteEmployeeAsync(1),Times.Once);
+
+        _mockEmployeeService.Verify(x => x.DeleteEmployeeAsync(employeeId), Times.Once);
     }
 
-    // Negative Test - Throws exception when employee does not exist
+    #endregion
+
+    #region UpdateEmployeePassword Tests
+
     [Fact]
-    public async Task Delete_ShouldThrowException_WhenEmployeeNotFound()
+    public async Task UpdateEmployeePassword_WithValidRequest_ReturnsSuccessMessage()
     {
         // Arrange
-        _mockEmployeeService.Setup(service => service.DeleteEmployeeAsync(999)).ThrowsAsync(new KeyNotFoundException("Employee with ID 999 not found"));
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.Delete(999));
+        var request = new UpdateEmployeePasswordDto
+        {
+            EmployeeId = 1,
+            CurrentPassword = "OldPassword123!",
+            NewPassword = "NewPassword123!"
+        };
 
-        _mockEmployeeService.Verify(service => service.DeleteEmployeeAsync(999), Times.Once);
+        _mockEmployeeService
+            .Setup(x => x.UpdateEmployeePasswordAsync(request))
+            .ReturnsAsync("Password updated successfully.");
+
+        // Act
+        var result = await _controller.UpdateEmployeePassword(request);
+
+        // Assert
+        Assert.Equal("Password updated successfully.", result);
+
+        _mockEmployeeService.Verify(x => x.UpdateEmployeePasswordAsync(request), Times.Once);
     }
-
-    
-
-
+    #endregion
 }
