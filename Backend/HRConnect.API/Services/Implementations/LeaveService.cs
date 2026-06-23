@@ -146,7 +146,7 @@ public class LeaveService : ILeaveService
             throw new NotFoundException("Leave request not found");
 
              var leaveDays =
-                (leave.EndDate.Date - leave.StartDate.Date).Days + 1;
+                CalculateLeaveDays(leave.StartDate, leave.EndDate);
 
             var balance = await _context.LeaveBalances
                 .FirstOrDefaultAsync(lb =>
@@ -161,8 +161,7 @@ public class LeaveService : ILeaveService
         else if (request.Status.Equals(
                 LeaveStatus.Cancelled.ToString(),
                 StringComparison.OrdinalIgnoreCase))
-        {
-            
+        {            
             balance.UsedDays -= leaveDays;
         }
         

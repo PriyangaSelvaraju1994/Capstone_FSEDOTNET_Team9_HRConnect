@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,6 +34,9 @@ export default function LoginPage() {
     | { from?: string; successMessage?: string }
     | null;
   const successMessage = routeState?.successMessage;
+  const [visibleSuccess, setVisibleSuccess] = useState<string | null>(
+    successMessage ?? null,
+  );
 
   const {
     register,
@@ -50,6 +53,19 @@ export default function LoginPage() {
     },
     [clearError],
   );
+
+  // Auto-hide route-state success messages after 10 seconds. If an auth
+  // error appears while the success message is visible, hide it immediately.
+  useEffect(() => {
+    setVisibleSuccess(successMessage ?? null);
+    if (!successMessage) return;
+    const id = window.setTimeout(() => setVisibleSuccess(null), 10000) as unknown as number;
+    return () => clearTimeout(id);
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (error && visibleSuccess) setVisibleSuccess(null);
+  }, [error, visibleSuccess]);
 
   if (isAuthenticated) {
     const from = routeState?.from ?? '/';
@@ -87,12 +103,12 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            {successMessage && (
+            {visibleSuccess && !error && (
               <div
                 role="status"
                 className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
               >
-                <span>{successMessage}</span>
+                <span>{visibleSuccess}</span>
               </div>
             )}
 
