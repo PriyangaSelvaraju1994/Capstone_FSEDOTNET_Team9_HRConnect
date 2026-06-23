@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -22,6 +23,7 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
   const { userId, redirectPath = '/my-leaves' } = options;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const timeoutRef = useRef<number | null>(null);
 
   const dispatch = useAppDispatch();
   const balances = useAppSelector(selectBalancesFor(userId));
@@ -47,6 +49,11 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
     endDate: string;
     reason?: string;
   }) => {
+    // Clear any existing error immediately when submitting again
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setSubmitError(null);
     try {
       await dispatch(
@@ -63,23 +70,50 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
       navigate(redirectPath);
       
     } catch (e) {
-      setSubmitError(
+      const message =
         typeof e === 'string'
           ? e
           : e instanceof Error
-            ? e.message
-            : 'Could not submit your request.',
-      );
+          ? e.message
+          : 'Could not submit your request.';
+
+      setSubmitError(message);
+      // Auto-clear the error after 10 seconds
+      timeoutRef.current = window.setTimeout(() => {
+        setSubmitError(null);
+        timeoutRef.current = null;
+      }, 10000) as unknown as number;
     }
   };
 
   const clearError = () => setSubmitError(null);
+
+  // Clear any pending timeout when the error is manually cleared.
+  const wrappedClearError = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setSubmitError(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     balances,
     submitError,
     computePreview,
     handleSubmit,
-    clearError,
+    clearError: wrappedClearError,
   };
 }
+
+// Ensure any pending timer is cleared when the hook is unmounted.
+// (React guarantees hooks run in component context; this cleanup is defensive.)
