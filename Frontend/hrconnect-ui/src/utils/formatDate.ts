@@ -1,4 +1,5 @@
 import { pluralize } from './format';
+import { countWorkingDays } from './leavePreview';
 
 export function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -48,18 +49,5 @@ export function formatLongDate(d: Date = new Date()): string {
 }
 
 export function calculateLeaveDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  //do not include weekends
-  let count = 0;
-  for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-    const day = d.getDay();
-    if (day !== 0 && day !== 6) {
-      count++;
-    }
-  }
-  return count;
-
-  // const diffTime = Math.abs(end.getTime() - start.getTime());
-  // return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // +1 to include the start date
+  return countWorkingDays(startDate, endDate);
 }

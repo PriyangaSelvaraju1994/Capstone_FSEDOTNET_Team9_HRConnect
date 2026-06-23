@@ -67,7 +67,9 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
       ).unwrap();
       // Refresh balances after submission
       void dispatch(fetchBalances(userId));
-      navigate(redirectPath);
+      navigate(redirectPath, {
+        state: { message: 'Leave request submitted successfully.' },
+      });
       
     } catch (e) {
       const message =

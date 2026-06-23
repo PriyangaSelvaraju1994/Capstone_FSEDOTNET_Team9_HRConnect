@@ -34,8 +34,8 @@ const schema = z
       }),
     reason: z
       .string()
-      .max(REASON_MAX, `Keep it under ${REASON_MAX} characters`)
-      .optional(),
+      .min(1, 'Reason is required')
+      .max(REASON_MAX, `Keep it under ${REASON_MAX} characters`),
   })
   .refine(
     (value) => new Date(value.endDate).getTime() >= new Date(value.startDate).getTime(),
@@ -206,17 +206,22 @@ export default function LeaveNewPage() {
                   htmlFor="reason"
                   className="block text-sm font-medium mb-1"
                 >
-                  Reason{' '}
-                  <span className="text-slate-400 font-normal">(optional)</span>
+                  Reason <span className="text-rose-600">*</span>
                 </label>
                 <textarea
                   id="reason"
                   rows={3}
                   maxLength={REASON_MAX}
+                  required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Family wedding"
                   {...register('reason')}
                 />
+                {errors.reason && (
+                  <p className="text-xs text-rose-600 mt-1">
+                    {errors.reason.message}
+                  </p>
+                )}
                 <p className="text-xs text-slate-500 mt-1">
                   {reason.length} / {REASON_MAX}
                 </p>

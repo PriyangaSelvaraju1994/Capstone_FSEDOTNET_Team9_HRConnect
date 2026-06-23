@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CalendarDays, Plus, XCircle } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { EmptyState } from '../../components/EmptyState';
@@ -15,6 +16,18 @@ import { range } from '../../utils/array';
 import { calculateLeaveDays, formatDateRange } from '../../utils/formatDate';
 
 export default function MyLeavesPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const state = location.state as { message?: string } | null;
+    if (!state?.message) return;
+
+    setSuccessMessage(state.message);
+    navigate(location.pathname + location.search, { replace: true });
+  }, [location.pathname, location.search, location.state, navigate]);
+
   const { user } = useAuth();
   const userId = user?.id ?? 0;
 
@@ -49,6 +62,23 @@ export default function MyLeavesPage() {
           </Link>
         }
       />
+
+      {successMessage && (
+        <div
+          role="status"
+          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+        >
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="rounded p-1 text-emerald-800 hover:bg-emerald-100"
+            aria-label="Dismiss success message"
+          >
+            <XCircle className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <span className="text-sm text-slate-500 mr-1">Show:</span>

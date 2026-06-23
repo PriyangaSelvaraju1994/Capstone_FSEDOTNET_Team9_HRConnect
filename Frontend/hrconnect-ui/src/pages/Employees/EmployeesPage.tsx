@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, MoreHorizontal, Users, X } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
@@ -34,6 +35,18 @@ const DESIGNATIONS: Array<Designation | 'All'> = [
 const STATUSES: EmployeeStatusFilter[] = ['All', 'Active', 'Inactive'];
 
 export default function EmployeesPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const state = location.state as { message?: string } | null;
+    if (!state?.message) return;
+
+    setSuccessMessage(state.message);
+    navigate(location.pathname + location.search, { replace: true });
+  }, [location.pathname, location.search, location.state, navigate]);
+
   const {
     employees,
     totalCount,
@@ -68,6 +81,23 @@ export default function EmployeesPage() {
           <></>
         }
       />
+
+      {successMessage && (
+        <div
+          role="status"
+          className="mb-3 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+        >
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="rounded p-1 text-emerald-800 hover:bg-emerald-100"
+            aria-label="Dismiss success message"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row gap-3 mb-3">
         <SearchInput
