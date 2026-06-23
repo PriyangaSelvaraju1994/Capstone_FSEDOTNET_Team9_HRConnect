@@ -1,76 +1,179 @@
-﻿using HRConnect.API.Entities;
-using HRConnect.API.Services.Implementations;
+﻿using Xunit;
+using Moq;
 using Microsoft.Extensions.Configuration;
+using HRConnect.API.Services.Implementations;
+using HRConnect.API.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Xunit;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 namespace HRConnect.Tests.Services;
+
 public class JwtServiceTests
 {
-    private readonly JwtService _service;
+    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly JwtService _jwtService;
+    private const string TestKey = "ThisIsAVerySecureSecretKeyForTestingPurposesOnly12345!";
+    private const string TestIssuer = "TestIssuer";
+    private const string TestAudience = "TestAudience";
+
     public JwtServiceTests()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "Jwt:Key", "ThisIsASecretKeyForUnitTesting123456789" },
-                { "Jwt:Issuer", "HRConnect" },
-                { "Jwt:Audience", "HRConnectUsers" }
-            })
-            .Build();
-        _service = new JwtService(configuration);
-    }
-    private User CreateUser(int id = 1,string fullName = "John Doe",bool isAdmin = false)
-    {
-        return new User
-        {
-            Id = id,
-            FullName = fullName,
-            Email = "john@test.com",
-            PasswordHash = "hash",
-            IsAdmin = isAdmin
-        };
+        _mockConfiguration = new Mock<IConfiguration>();
+
+        // Setup configuration values
+        _mockConfiguration.Setup(c => c["Jwt:Key"]).Returns(TestKey);
+        _mockConfiguration.Setup(c => c["Jwt:Issuer"]).Returns(TestIssuer);
+        _mockConfiguration.Setup(c => c["Jwt:Audience"]).Returns(TestAudience);
+
+        _jwtService = new JwtService(_mockConfiguration.Object);
     }
 
-    // Positive Test - Generates JWT token successfully
     [Fact]
-    public void GenerateToken_ShouldReturnToken_WhenUserIsValid()
+    public void GenerateToken_WithValidUser_ReturnsValidToken()
     {
         // Arrange
-        var user = CreateUser();
+        var user = new User
+        {
+            Id = 1,
+            FullName = "John Doe",
+            Email = "john@example.com",
+            IsAdmin = false
+        };
+
         // Act
-        var token = _service.GenerateToken(user);
+        var token = _jwtService.GenerateToken(user);
+
         // Assert
-        Assert.False(string.IsNullOrWhiteSpace(token));
+        Assert.NotNull(token);
+        Assert.NotEmpty(token);
+
+        // Validate token structure
         var handler = new JwtSecurityTokenHandler();
         Assert.True(handler.CanReadToken(token));
     }
-    
-    // Positive Test - Generates token with correct claims
+
     [Fact]
-    public void GenerateToken_ShouldContainCorrectClaims_WhenEmployeeUserIsProvided()
+    public void GenerateToken_WithAdminUser_ContainsAdminRole()
     {
         // Arrange
-        var user = CreateUser(id: 100,fullName: "John Doe");
+        var user = new User
+        {
+            Id = 1,
+            FullName = "Admin User",
+            Email = "admin@example.com",
+            IsAdmin = true
+        };
+
         // Act
-        var token = _service.GenerateToken(user);
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        var token = _jwtService.GenerateToken(user);
+
         // Assert
-        Assert.Equal("100",jwt.Claims.First(c =>c.Type == ClaimTypes.NameIdentifier).Value);
-        Assert.Equal("John Doe",jwt.Claims.First(c =>c.Type == ClaimTypes.Name).Value);
-        Assert.Equal("Employee",jwt.Claims.First(c =>c.Type == ClaimTypes.Role).Value);
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        Assert.NotNull(roleClaim);
+        Assert.Equal("Admin", roleClaim.Value);
     }
 
-    // Positive Test - Generates Admin role claim
     [Fact]
-    public void GenerateToken_ShouldContainAdminRole_WhenUserIsAdmin()
+    public void GenerateToken_WithEmployeeUser_ContainsEmployeeRole()
     {
         // Arrange
-        var user = CreateUser(isAdmin: true);
+        var user = new User
+        {
+            Id = 2,
+            FullName = "Employee User",
+            Email = "employee@example.com",
+            IsAdmin = false
+        };
+
         // Act
-        var token = _service.GenerateToken(user);
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        var token = _jwtService.GenerateToken(user);
+
         // Assert
-        Assert.Equal("Admin",jwt.Claims.First(c =>c.Type == ClaimTypes.Role).Value);
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        Assert.NotNull(roleClaim);
+        Assert.Equal("Employee", roleClaim.Value);
     }
+
+    [Fact]
+    public void GenerateToken_ContainsAllRequiredClaims()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 5,
+            FullName = "Test User",
+            Email = "test@example.com",
+            IsAdmin = false
+        };
+
+        // Act
+        var token = _jwtService.GenerateToken(user);
+
+        // Assert
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        // Check NameIdentifier claim
+        var nameIdentifierClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        Assert.NotNull(nameIdentifierClaim);
+        Assert.Equal(user.Id.ToString(), nameIdentifierClaim.Value);
+
+        // Check Name claim
+        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+        Assert.NotNull(nameClaim);
+        Assert.Equal(user.FullName, nameClaim.Value);
+
+        // Check Email claim
+        var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
+        Assert.NotNull(emailClaim);
+        Assert.Equal(user.Email, emailClaim.Value);
+
+        // Check Jti claim
+        var jtiClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti);
+        Assert.NotNull(jtiClaim);
+        Assert.False(string.IsNullOrEmpty(jtiClaim.Value));
+        Assert.True(Guid.TryParse(jtiClaim.Value, out _));
+    }
+
+    //[Fact]
+    //public void GenerateToken_CanBeValidatedWithCorrectKey()
+    //{
+    //    // Arrange
+    //    var user = new User
+    //    {
+    //        Id = 1,
+    //        FullName = "Test User",
+    //        Email = "test@example.com",
+    //        IsAdmin = false
+    //    };
+
+    //    // Act
+    //    var token = _jwtService.GenerateToken(user);
+
+    //    // Assert - Try to validate the token
+    //    var tokenHandler = new JwtSecurityTokenHandler();
+    //    var validationParameters = new TokenValidationParameters
+    //    {
+    //        ValidateIssuerSigningKey = true,
+    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestKey)),
+    //        ValidateIssuer = true,
+    //        ValidIssuer = TestIssuer,
+    //        ValidateAudience = true,
+    //        ValidAudience = TestAudience,
+    //        ValidateLifetime = true,
+    //        ClockSkew = TimeSpan.Zero
+    //    };
+
+    //    var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+    //    Assert.NotNull(principal);
+    //    Assert.NotNull(validatedToken);
+    //}
 }

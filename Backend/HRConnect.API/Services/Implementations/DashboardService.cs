@@ -24,8 +24,9 @@ public class DashboardService : IDashboardService
                 l.StartDate.Month == DateTime.Now.Month &&
                 l.StartDate.Year == DateTime.Now.Year);
 
+        //filter active employees
         var activeEmployees = await _context.Employees
-            .CountAsync();
+            .CountAsync(e => e.IsActive);
 
         var onLeaveToday = await _context.LeaveRequests
             .CountAsync(l =>
@@ -65,7 +66,7 @@ var activities = leaveRequests.Select(l => new RecentActivityDto
 
     Action = "requested",
     LeaveType = l.LeaveType,
-    Days = (l.EndDate - l.StartDate).Days + 1,
+    Days = CalculateLeaveDays(l.StartDate, l.EndDate),
     StartDate = l.StartDate,
     EndDate = l.EndDate,
     OccurredAt = l.CreatedDate ?? DateTime.MinValue,
@@ -75,4 +76,24 @@ var activities = leaveRequests.Select(l => new RecentActivityDto
 return activities;
 
 }
+
+    private int CalculateLeaveDays(DateTime startDate, DateTime endDate)
+    {
+        int days = 0;
+
+        for (var date = startDate.Date;
+            date <= endDate.Date;
+            date = date.AddDays(1))
+        {
+            bool isHoliday = _context.Holidays
+                .Any(h => h.HolidayDate.Date == date);
+            if (date.DayOfWeek != DayOfWeek.Saturday &&
+                date.DayOfWeek != DayOfWeek.Sunday && !isHoliday)
+            {
+                days++;
+            }
+        }
+
+        return days;
+    }
 }

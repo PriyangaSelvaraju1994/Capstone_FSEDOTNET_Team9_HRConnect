@@ -5,6 +5,7 @@ import employeesReducer from './slices/employeesSlice';
 import leavesReducer from './slices/leavesSlice';
 import profileReducer from './slices/profileSlice';
 import { sessionStoragePersistence } from './middleware/sessionStoragePersistence';
+import autoDismissErrors from './middleware/autoDismissErrors';
 
 export const store = configureStore({
   reducer: {
@@ -14,7 +15,8 @@ export const store = configureStore({
     profile: profileReducer,
     dashboard: dashboardReducer,
   },
-  middleware: (getDefault) => getDefault().concat(sessionStoragePersistence),
+  middleware: (getDefault) =>
+    getDefault().concat(sessionStoragePersistence).concat(autoDismissErrors),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
