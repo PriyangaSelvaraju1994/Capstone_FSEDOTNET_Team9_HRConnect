@@ -1,11 +1,10 @@
-import { forwardRef, useEffect, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
+import { forwardRef, useEffect, type ClipboardEvent, type KeyboardEvent } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  AlertCircle,
   Check,
   ChevronDown,
   Loader2,
@@ -15,6 +14,7 @@ import { AppShell } from '../../components/AppShell';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { PageHeader } from '../../components/PageHeader';
 import { SectionHeading } from '../../components/SectionHeading';
+import { useToast } from '../../components/ToastProvider';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   createEmployee,
@@ -138,8 +138,7 @@ export default function EmployeeFormPage({ mode }: Props) {
   const navigate = useNavigate();
   const params = useParams<{ id: string }>();
   const editId = mode === 'edit' ? Number(params.id) : undefined;
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   const dispatch = useAppDispatch();
   const existing = useAppSelector(selectEmployeeById(editId));
@@ -195,7 +194,6 @@ export default function EmployeeFormPage({ mode }: Props) {
   }
 
   const onSubmit = handleSubmit(async (values) => {
-    setSubmitError(null);
     try {
       const fullName = `${values.firstName} ${values.lastName}`.trim().replace(/\s+/g, ' ');
       const payloadValues = {
@@ -215,7 +213,7 @@ export default function EmployeeFormPage({ mode }: Props) {
       const message = isEdit
         ? 'Employee updated successfully.'
         : 'Employee saved successfully.';
-      setSuccessMessage(message);
+      toast.success(message);
       setTimeout(() => navigate('/employees'), 2000);
     } catch (e) {
       // The employees slice rejects with { message, field } for known errors.
@@ -226,7 +224,7 @@ export default function EmployeeFormPage({ mode }: Props) {
         });
         return;
       }
-      setSubmitError(
+      toast.error(
         typeof rejection === 'string'
           ? rejection
           : rejection?.message ?? 'Could not save the employee.',
@@ -257,26 +255,6 @@ export default function EmployeeFormPage({ mode }: Props) {
       />
 
       <div className="bg-white border border-slate-200 rounded-lg p-6">
-        {successMessage && (
-          <div
-            role="status"
-            className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
-          >
-            <span>{successMessage}</span>
-          </div>
-        )}
-        {submitError && (
-          <div
-            role="alert"
-            className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
-          >
-            <AlertCircle
-              className="w-4 h-4 mt-0.5 flex-none"
-              aria-hidden="true"
-            />
-            <span>{submitError}</span>
-          </div>
-        )}
         <form onSubmit={onSubmit} className="space-y-5" noValidate>
           <section>
             <SectionHeading>Personal</SectionHeading>

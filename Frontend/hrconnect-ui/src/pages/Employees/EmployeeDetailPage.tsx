@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { Briefcase, Building, Loader2, Mail, Pencil, Trash2, CheckCircle2 } from 'lucide-react';
+import { Briefcase, Building, Loader2, Mail, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
 import { Breadcrumb } from '../../components/Breadcrumb';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import { SectionCard } from '../../components/SectionCard';
 import { SectionHeading } from '../../components/SectionHeading';
 import { StatusBadge } from '../../components/StatusBadge';
+import { useToast } from '../../components/ToastProvider';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
 import { useEmployeeDetail } from '../../hooks/useEmployeeDetail';
 import { range } from '../../utils/array';
@@ -21,6 +21,7 @@ const HISTORY_PAGE_SIZE = 10;
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const toast = useToast();
 
   const {
     employee: emp,
@@ -29,13 +30,31 @@ export default function EmployeeDetailPage() {
     isNotFound,
     deleting,
     deleteSuccess,
+    deleteError,
     balances,
     balancesLoading,
     history,
     historyLoading,
-    refetch,
     handleDelete,
   } = useEmployeeDetail({ employeeId: Number(id), historyPageSize: HISTORY_PAGE_SIZE });
+
+  useEffect(() => {
+    if (empError) {
+      toast.error("We couldn't load this employee. Please try again.");
+    }
+  }, [empError, toast]);
+
+  useEffect(() => {
+    if (deleteSuccess) {
+      toast.success('Employee deleted successfully. Redirecting...');
+    }
+  }, [deleteSuccess, toast]);
+
+  useEffect(() => {
+    if (deleteError) {
+      toast.error(deleteError);
+    }
+  }, [deleteError, toast]);
 
   if (!id) return <Navigate to="/employees" replace />;
   if (isNotFound) return <Navigate to="/404" replace />;
@@ -48,25 +67,6 @@ export default function EmployeeDetailPage() {
           { label: emp ? emp.fullName : 'Loading…' },
         ]}
       />
-
-      {empError && (
-        <div className="mb-4">
-          <ErrorBanner
-            message="We couldn't load this employee. Please try again."
-            onRetry={refetch}
-          />
-        </div>
-      )}
-
-      {deleteSuccess && (
-        <div
-          role="status"
-          className="mb-4 flex items-center gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
-        >
-          <CheckCircle2 className="w-4 h-4 flex-none" aria-hidden="true" />
-          <span>Employee deleted successfully. Redirecting…</span>
-        </div>
-      )}
 
       <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6" style={{ pointerEvents: deleteSuccess ? 'none' : 'auto' }}>
         {empLoading || !emp ? (

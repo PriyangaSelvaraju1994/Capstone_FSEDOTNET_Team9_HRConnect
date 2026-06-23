@@ -61,11 +61,17 @@ function clearOtherSlices(store: any, current: string) {
   }
 }
 
-export const autoDismissErrors: Middleware = (store) => (next) => (action) => {
+export const autoDismissErrors: Middleware = (store) => (next) => (action: unknown) => {
   const res = next(action);
 
   // Only handle rejected thunks (RTK creates `prefix/rejected` types).
-  if (typeof action.type === 'string' && action.type.endsWith('/rejected')) {
+  if (
+    action !== null &&
+    typeof action === 'object' &&
+    'type' in action &&
+    typeof action.type === 'string' &&
+    action.type.endsWith('/rejected')
+  ) {
     const parts = action.type.split('/');
     const slice = parts[0];
 
@@ -84,9 +90,9 @@ export const autoDismissErrors: Middleware = (store) => (next) => (action) => {
         scheduleClear('employees', () => store.dispatch(clearEmployeeMutationError()));
         break;
       case 'profile':
-        if (action.type.startsWith('profile/update')) {
+        if (typeof action.type === 'string' && action.type.startsWith('profile/update')) {
           scheduleClear('profile.update', () => store.dispatch(clearProfileUpdateState()));
-        } else if (action.type.startsWith('profile/changePassword')) {
+        } else if (typeof action.type === 'string' && action.type.startsWith('profile/changePassword')) {
           scheduleClear('profile.password', () => store.dispatch(clearPasswordState()));
         }
         break;

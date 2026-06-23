@@ -29,6 +29,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const { employeeId, historyPageSize = 10 } = options;
   const [deleting, setDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const dispatch = useAppDispatch();
@@ -67,6 +68,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const handleDelete = useCallback(async () => {
     if (!emp) return;
 
+    setDeleteError(null);
     setDeleting(true);
     try {
       await dispatch(deleteEmployee(emp.id)).unwrap();
@@ -78,8 +80,14 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
           }),
         1000,
       );
-    } catch {
-      // Error surfaced through slice mutation state
+    } catch (error) {
+      setDeleteError(
+        typeof error === 'string'
+          ? error
+          : error instanceof Error
+            ? error.message
+            : 'Could not delete employee.',
+      );
       setDeleting(false);
     }
   }, [emp, dispatch, navigate]);
@@ -92,6 +100,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
     isNotFound,
     deleting,
     deleteSuccess,
+    deleteError,
 
     // Related data
     balances,

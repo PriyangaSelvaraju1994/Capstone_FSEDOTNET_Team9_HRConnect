@@ -88,8 +88,6 @@ export function useLeaveForm(options: UseLeaveFormOptions) {
     }
   };
 
-  const clearError = () => setSubmitError(null);
-
   // Clear any pending timeout when the error is manually cleared.
   const wrappedClearError = () => {
     if (timeoutRef.current) {

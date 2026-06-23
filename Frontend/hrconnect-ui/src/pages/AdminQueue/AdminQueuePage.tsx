@@ -3,11 +3,11 @@ import { Inbox } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
 import { EmptyState } from '../../components/EmptyState';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import { FilterChip } from '../../components/FilterChip';
 import { LeaveDetailPanel } from '../../components/LeaveDetailPanel';
 import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
+import { useToast } from '../../components/ToastProvider';
 import { getLeaveTypeMeta } from '../../components/leaveTypeMeta';
 import { useAdminQueue } from '../../hooks/useAdminQueue';
 import { usePagination } from '../../hooks/usePagination';
@@ -19,6 +19,7 @@ import { getInitials } from '../../utils/user';
 import { StatusBadge } from '../../components/StatusBadge';
 
 export default function AdminQueuePage() {
+  const toast = useToast();
   const {
     requests,
     loading,
@@ -32,7 +33,6 @@ export default function AdminQueuePage() {
     successMessage,
     handleApprove,
     handleReject,
-    refetch,
   } = useAdminQueue();
 
   const [status, setStatus] = useState<LeaveStatusFilter>('Pending');
@@ -62,6 +62,27 @@ export default function AdminQueuePage() {
       setPage(totalPages);
     }
   }, [page, pageSize, setPage, total]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
+
+  useEffect(() => {
+    if (mutation.status === 'failed' && mutation.error) {
+      toast.error(mutation.error);
+    }
+  }, [mutation.status, mutation.error, toast]);
+
+  useEffect(() => {
+    if (successMessage === 'approved') {
+      toast.success('Request approved successfully.');
+    }
+    if (successMessage === 'rejected') {
+      toast.warning('Request rejected successfully.');
+    }
+  }, [successMessage, toast]);
 
   const handleRowClick = (requestId: string) => {
     setSelectedId((current) => (current === requestId ? null : requestId));
@@ -100,21 +121,6 @@ export default function AdminQueuePage() {
           />
         ))}
       </div>
-
-      {error && (
-        <div className="mb-4">
-          <ErrorBanner
-            message="We couldn't load the queue. Please try again."
-            onRetry={refetch}
-          />
-        </div>
-      )}
-
-      {mutation.status === 'failed' && mutation.error && (
-        <div className="mb-4">
-          <ErrorBanner message={mutation.error} />
-        </div>
-      )}
 
       <div className="relative">
         <div

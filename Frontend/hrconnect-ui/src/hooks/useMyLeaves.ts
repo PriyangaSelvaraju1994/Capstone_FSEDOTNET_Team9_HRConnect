@@ -8,7 +8,6 @@ import {
 } from '../store/slices/leavesSlice';
 import type { LeaveRequest, LeaveStatusFilter } from '../types/leave';
 import { usePagination } from './usePagination';
-import { useConfirmDialog } from './useConfirmDialog';
 
 export interface UseMyLeavesOptions {
   userId: number;
@@ -28,7 +27,6 @@ export function useMyLeaves(options: UseMyLeavesOptions) {
   const dispatch = useAppDispatch();
   const myLeaves = useAppSelector(selectMyLeaves);
   const mutation = useAppSelector(selectLeaveMutation);
-  const { confirm } = useConfirmDialog();
 
   const loading = myLeaves.status === 'loading';
   const error = myLeaves.status === 'failed' ? myLeaves.error : null;
@@ -81,22 +79,17 @@ export function useMyLeaves(options: UseMyLeavesOptions) {
   const handleCancel = useCallback(
     async (req: LeaveRequest) => {
       if (req.status !== 'Pending') return;
-      const confirmed = await confirm({
-        message: 'Cancel this leave request?',
-      });
-      if (!confirmed) return;
-
       setCancellingId(req.id);
       try {
         await dispatch(cancelLeave(req.id)).unwrap();
         refetch();
       } catch {
-        // Error surfaced via mutation.error banner
+        // Error surfaced via mutation.error toast
       } finally {
         setCancellingId(null);
       }
     },
-    [confirm, dispatch, refetch],
+    [dispatch, refetch],
   );
 
   return {

@@ -5,7 +5,6 @@ import {
   Clock,
   Inbox,
   Search,
-  UserCheck,
   Users,
 } from 'lucide-react';
 import {
@@ -14,11 +13,11 @@ import {
 } from '../../components/ActivityListItem';
 import { AppShell } from '../../components/AppShell';
 import { EmptyState } from '../../components/EmptyState';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import { KpiTile, KpiTileSkeleton } from '../../components/KpiTile';
 import { PageHeader } from '../../components/PageHeader';
 import { SectionCard } from '../../components/SectionCard';
 import { ShortcutLink } from '../../components/ShortcutLink';
+import { useToast } from '../../components/ToastProvider';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   fetchHrDashboard,
@@ -31,6 +30,7 @@ import { formatLongDate } from '../../utils/formatDate';
 import { HrDashboardSummary } from '@/types/leave';
 
 export default function HrDashboardPage() {
+  const toast = useToast();
   const dispatch = useAppDispatch();
   const slot = useAppSelector(selectHrDashboard);
   const recentSlot = useAppSelector(selectHrDashboardRecent);
@@ -44,10 +44,11 @@ export default function HrDashboardPage() {
     void dispatch(fetchHrDashboardRecent());
   }, [dispatch]);
 
-  function refetch() {
-    void dispatch(fetchHrDashboard());
-    void dispatch(fetchHrDashboardRecent());
-  }
+  useEffect(() => {
+    if (error) {
+      toast.error("We couldn't load HR metrics. Please try again.");
+    }
+  }, [error, toast]);
 
   const pendingCount = data?.pendingCount;
 
@@ -67,15 +68,6 @@ export default function HrDashboardPage() {
           </Link>
         }
       />
-
-      {error && (
-        <div className="mb-6">
-          <ErrorBanner
-            message="We couldn't load HR metrics. Please try again."
-            onRetry={refetch}
-          />
-        </div>
-      )}
 
       <section aria-labelledby="kpi-heading" className="mb-8">
         <h2 id="kpi-heading" className="sr-only">
