@@ -4,16 +4,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  AlertCircle,
-  CheckCircle2,
   KeyRound,
   Loader2,
   LogOut,
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import { PageHeader } from '../../components/PageHeader';
+import { useToast } from '../../components/ToastProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import type { Employee } from '../../types/employee';
@@ -38,6 +36,7 @@ const passwordSchema = z
   });
 
 export default function ProfilePage() {
+  const toast = useToast();
   const { user, signOut } = useAuth();
   const userId = user?.id ?? 0;
 
@@ -49,8 +48,25 @@ export default function ProfilePage() {
     passwordChangeError,
     handleChangePassword,
     clearPasswordState: clearPwdState,
-    refetch,
   } = useProfile({ userId });
+
+  useEffect(() => {
+    if (error) {
+      toast.error("We couldn't load your profile. Please try again.");
+    }
+  }, [error, toast]);
+
+  useEffect(() => {
+    if (passwordChangeError) {
+      toast.error(passwordChangeError);
+    }
+  }, [passwordChangeError, toast]);
+
+  useEffect(() => {
+    if (passwordChanged) {
+      toast.success('Password updated.');
+    }
+  }, [passwordChanged, toast]);
 
   return (
     <AppShell maxWidth="max-w-3xl">
@@ -59,22 +75,11 @@ export default function ProfilePage() {
         description="View your details and change your password."
       />
 
-      {error && (
-        <div className="mb-4">
-          <ErrorBanner
-            message="We couldn't load your profile. Please try again."
-            onRetry={refetch}
-          />
-        </div>
-      )}
-
       <ProfileCard loading={loading} emp={emp} />
 
       <div className="h-6" />
 
       <PasswordCard
-        passwordChanged={passwordChanged}
-        passwordChangeError={passwordChangeError}
         handleChangePassword={handleChangePassword}
         clearPasswordState={clearPwdState}
       />
@@ -165,15 +170,11 @@ function ProfileCard({ loading, emp }: ProfileCardProps) {
 }
 
 interface PasswordCardProps {
-  passwordChanged: boolean;
-  passwordChangeError: string | null;
   handleChangePassword: (data: PasswordFormValues) => Promise<void>;
   clearPasswordState: () => void;
 }
 
 function PasswordCard({
-  passwordChanged,
-  passwordChangeError,
   handleChangePassword,
   clearPasswordState,
 }: PasswordCardProps) {
@@ -219,31 +220,6 @@ function PasswordCard({
       <p className="text-slate-600 text-sm mb-4">
         You'll need to sign in again after changing.
       </p>
-
-      {passwordChangeError && (
-        <div
-          role="alert"
-          className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
-        >
-          <AlertCircle
-            className="w-4 h-4 mt-0.5 flex-none"
-            aria-hidden="true"
-          />
-          <span>{passwordChangeError}</span>
-        </div>
-      )}
-      {passwordChanged && (
-        <div
-          role="status"
-          className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
-        >
-          <CheckCircle2
-            className="w-4 h-4 mt-0.5 flex-none"
-            aria-hidden="true"
-          />
-          <span>Password updated.</span>
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field

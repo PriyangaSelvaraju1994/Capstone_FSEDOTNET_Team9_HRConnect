@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, MoreHorizontal, Users, X } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { Avatar } from '../../components/Avatar';
 import { EmptyState } from '../../components/EmptyState';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import { PageHeader } from '../../components/PageHeader';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
+import { useToast } from '../../components/ToastProvider';
 import { useEmployeesList } from '../../hooks/useEmployeesList';
 import type { Department, Designation } from '../../types/auth';
 import type { EmployeeStatusFilter } from '../../types/employee';
@@ -37,15 +37,15 @@ const STATUSES: EmployeeStatusFilter[] = ['All', 'Active', 'Inactive'];
 export default function EmployeesPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     const state = location.state as { message?: string } | null;
     if (!state?.message) return;
 
-    setSuccessMessage(state.message);
+    toast.success(state.message);
     navigate(location.pathname + location.search, { replace: true });
-  }, [location.pathname, location.search, location.state, navigate]);
+  }, [location.pathname, location.search, location.state, navigate, toast]);
 
   const {
     employees,
@@ -65,8 +65,11 @@ export default function EmployeesPage() {
     page,
     pageSize,
     setPage,
-    refetch,
   } = useEmployeesList();
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error, toast]);
 
   return (
     <AppShell>
@@ -81,23 +84,6 @@ export default function EmployeesPage() {
           <></>
         }
       />
-
-      {successMessage && (
-        <div
-          role="status"
-          className="mb-3 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
-        >
-          <span>{successMessage}</span>
-          <button
-            type="button"
-            onClick={() => setSuccessMessage(null)}
-            className="rounded p-1 text-emerald-800 hover:bg-emerald-100"
-            aria-label="Dismiss success message"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row gap-3 mb-3">
         <SearchInput
@@ -155,15 +141,6 @@ export default function EmployeesPage() {
           >
             Clear filters
           </button>
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4">
-          <ErrorBanner
-            message="We couldn't load employees. Please try again."
-            onRetry={refetch}
-          />
         </div>
       )}
 

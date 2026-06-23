@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  AlertCircle,
   Building2,
   Loader2,
   Lock,
   LogIn,
   Mail,
 } from 'lucide-react';
+import { useToast } from '../../components/ToastProvider';
 import { useAppDispatch } from '../../store/hooks';
 import { loginThunk } from '../../store/slices/authSlice';
 import { useAuth } from '../../hooks/useAuth';
@@ -28,15 +28,13 @@ type FormValues = z.infer<typeof schema>;
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const toast = useToast();
   const { isAuthenticated, status, error, clearError } = useAuth();
 
   const routeState = location.state as
     | { from?: string; successMessage?: string }
     | null;
   const successMessage = routeState?.successMessage;
-  const [visibleSuccess, setVisibleSuccess] = useState<string | null>(
-    successMessage ?? null,
-  );
 
   const {
     register,
@@ -54,18 +52,17 @@ export default function LoginPage() {
     [clearError],
   );
 
-  // Auto-hide route-state success messages after 10 seconds. If an auth
-  // error appears while the success message is visible, hide it immediately.
   useEffect(() => {
-    setVisibleSuccess(successMessage ?? null);
-    if (!successMessage) return;
-    const id = window.setTimeout(() => setVisibleSuccess(null), 10000) as unknown as number;
-    return () => clearTimeout(id);
-  }, [successMessage]);
+    if (successMessage) {
+      toast.success(successMessage);
+    }
+  }, [successMessage, toast]);
 
   useEffect(() => {
-    if (error && visibleSuccess) setVisibleSuccess(null);
-  }, [error, visibleSuccess]);
+    if (error?.message) {
+      toast.error(error.message);
+    }
+  }, [error, toast]);
 
   if (isAuthenticated) {
     const from = routeState?.from ?? '/';
@@ -77,7 +74,6 @@ export default function LoginPage() {
   });
 
   const submitting = status === 'loading';
-  const loginErrorMessage = error?.message || 'Something went wrong. Please try again.';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,25 +99,6 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            {visibleSuccess && !error && (
-              <div
-                role="status"
-                className="mb-4 flex gap-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm"
-              >
-                <span>{visibleSuccess}</span>
-              </div>
-            )}
-
-            {error && (
-              <div
-                role="alert"
-                className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
-              >
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-none" aria-hidden="true" />
-                <span>{loginErrorMessage}</span>
-              </div>
-            )}
-
             <form onSubmit={onSubmit} noValidate className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1">

@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarDays, Plus, Sun, User as UserIcon } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { EmptyState } from '../../components/EmptyState';
-import { ErrorBanner } from '../../components/ErrorBanner';
 import {
   LeaveBalanceCard,
   LeaveBalanceCardSkeleton,
@@ -15,21 +14,30 @@ import { PageHeader } from '../../components/PageHeader';
 import { QuickActionTile } from '../../components/QuickActionTile';
 import { SectionCard } from '../../components/SectionCard';
 import { SectionHeading } from '../../components/SectionHeading';
+import { useToast } from '../../components/ToastProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useEmployeeDashboard } from '../../hooks/useEmployeeDashboard';
 import { range } from '../../utils/array';
 import { getGreeting } from '../../utils/user';
 import { useMyLeaves } from '../../hooks/useMyLeaves';
+import { useEffect } from 'react';
 
 export default function EmployeeDashboardPage() {
+  const toast = useToast();
   const { user } = useAuth();
   const userId = user?.id ?? 0;
-  const { data, loading, error, refetch } = useEmployeeDashboard({ userId });
+  const { data, loading, error } = useEmployeeDashboard({ userId });
   const {
       leaves: leavesData,
       loading: leavesLoading,
       error: leavesError,
-    } = useMyLeaves({ userId });
+  } = useMyLeaves({ userId });
+
+  useEffect(() => {
+    if (error) {
+      toast.error("We couldn't load your dashboard. Please try again.");
+    }
+  }, [error, toast]);
 
   return (
     <AppShell>
@@ -41,15 +49,6 @@ export default function EmployeeDashboardPage() {
           </span>
         }
       />
-
-      {error && (
-        <div className="mb-6">
-          <ErrorBanner
-            message="We couldn't load your dashboard. Please try again."
-            onRetry={refetch}
-          />
-        </div>
-      )}
 
       <section aria-labelledby="balances-heading" className="mb-8">
         <SectionHeading id="balances-heading" className="mb-3">

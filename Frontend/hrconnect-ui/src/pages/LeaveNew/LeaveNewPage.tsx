@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertCircle, Loader2, Send } from 'lucide-react';
+import { Loader2, Send } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppShell } from '../../components/AppShell';
@@ -11,6 +11,7 @@ import { BalancePreviewCard } from '../../components/BalancePreviewCard';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { LeaveTypeDropdown } from '../../components/LeaveTypeDropdown';
 import { PageHeader } from '../../components/PageHeader';
+import { useToast } from '../../components/ToastProvider';
 import { useAuth } from '../../hooks/useAuth';
 import { useLeaveForm } from '../../hooks/useLeaveForm';
 import type { LeaveType } from '../../types/leave';
@@ -72,7 +73,9 @@ export default function LeaveNewPage() {
     submitError,
     computePreview,
     handleSubmit: submitLeave,
+    clearError,
   } = useLeaveForm({ userId: Number(userId) });
+  const toast = useToast();
 
   const {
     register,
@@ -107,6 +110,12 @@ export default function LeaveNewPage() {
     await submitLeave(values);
   });
 
+  useEffect(() => {
+    if (!submitError) return;
+    toast.error(submitError);
+    clearError();
+  }, [submitError, toast, clearError]);
+
   return (
     <AppShell maxWidth="max-w-5xl">
       <Breadcrumb
@@ -123,18 +132,6 @@ export default function LeaveNewPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="bg-white border border-slate-200 rounded-lg p-6">
-            {submitError && (
-              <div
-                role="alert"
-                className="mb-4 flex gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm"
-              >
-                <AlertCircle
-                  className="w-4 h-4 mt-0.5 flex-none"
-                  aria-hidden="true"
-                />
-                <span>{submitError}</span>
-              </div>
-            )}
             <form onSubmit={onSubmit} className="space-y-5" noValidate>
               <LeaveTypeDropdown
                 value={type}
