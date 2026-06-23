@@ -23,7 +23,6 @@ public class EmployeeService : IEmployeeService
     {
         //Fetching all employees from the database and ordering them by JoiningDate in descending order
         return await _context.Employees
-            .OrderByDescending(e => e.JoiningDate)
             .Select(e => new EmployeeDto
             {
                 Id = e.Id,
@@ -35,6 +34,7 @@ public class EmployeeService : IEmployeeService
                 Email = e.User != null ? e.User.Email : string.Empty,
                 IsActive = e.IsActive
             })
+            .OrderByDescending(e => e.Id)
             .ToListAsync();
     }
 
@@ -92,7 +92,7 @@ public class EmployeeService : IEmployeeService
             UserId = request.UserId,
             // Department = request.Department.Trim(),
             // Designation = request.Designation.Trim(),
-            // JoiningDate = request.JoiningDate,
+            JoiningDate = null,
             IsActive = false // New employees are inactive by default until HR activates them after verification
         };
         _context.Employees.Add(employee);
@@ -107,7 +107,7 @@ public class EmployeeService : IEmployeeService
             UserId = employee.UserId,
             // Department = employee.Department,
             // Designation = employee.Designation,
-            // JoiningDate = employee.JoiningDate,
+            JoiningDate = employee.JoiningDate,
             Email = employee.User != null ? employee.User.Email : string.Empty,
             IsActive = employee.IsActive
         };
