@@ -17,8 +17,8 @@ public class CreateLeaveRequestValidator
             .WithMessage("Leave Type is required");
 
         RuleFor(x => x.Reason)
-            .NotEmpty()
-            .WithMessage("Reason is required");
+            .MaximumLength(500)
+            .WithMessage("Reason must be 500 characters or fewer");
 
         RuleFor(x => x.StartDate)
             .LessThanOrEqualTo(x => x.EndDate)

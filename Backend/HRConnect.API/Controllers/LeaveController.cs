@@ -20,7 +20,7 @@ public class LeaveController : ControllerBase
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> ApplyLeave(
-        CreateLeaveRequestDto request)
+        [FromBody] CreateLeaveRequestDto request)
     {
    
     var result =

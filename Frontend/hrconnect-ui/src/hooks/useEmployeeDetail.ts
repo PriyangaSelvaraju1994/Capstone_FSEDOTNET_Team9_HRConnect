@@ -76,7 +76,7 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
       setTimeout(
         () =>
           navigate('/employees', {
-            state: { message: `${emp.fullName} was deleted successfully.` },
+            state: {  },
           }),
         1000,
       );

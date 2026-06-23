@@ -98,19 +98,13 @@ http.interceptors.response.use(
   },
 );
 
-function getStringValue(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim().length > 0
-    ? value
-    : undefined;
-}
-
 function collectMessageCandidates(value: unknown): string[] {
   if (value === null || value === undefined) {
     return [];
   }
 
   if (typeof value === 'string') {
-    return value.trim() ? [value] : [];
+    return value.trim() ? [value.trim()] : [];
   }
 
   if (Array.isArray(value)) {
@@ -119,22 +113,26 @@ function collectMessageCandidates(value: unknown): string[] {
 
   if (typeof value === 'object') {
     const obj = value as Record<string, unknown>;
+    const normalized = Object.fromEntries(
+      Object.entries(obj).map(([key, item]) => [key.toLowerCase(), item]),
+    ) as Record<string, unknown>;
+
     const keys = [
       'message',
-      'msg',
       'error',
+      'errormessage',
+      'responsemessage',
+      'exceptionmessage',
+      'msg',
       'detail',
       'title',
       'description',
-      'errorMessage',
-      'responseMessage',
       'errors',
-      'exceptionMessage',
     ];
 
-    const directCandidates = keys
-      .map((key) => getStringValue(obj[key]))
-      .filter((item): item is string => Boolean(item));
+    const directCandidates = keys.flatMap((key) =>
+      collectMessageCandidates(normalized[key]),
+    );
 
     const nestedCandidates = Object.values(obj).flatMap((item) =>
       collectMessageCandidates(item),
