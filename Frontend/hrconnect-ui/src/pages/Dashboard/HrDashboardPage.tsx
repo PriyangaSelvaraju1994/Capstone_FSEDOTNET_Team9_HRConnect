@@ -170,13 +170,13 @@ function KpiGrid({ summary }: KpiGridProps) {
         value={summary.activeEmployees}
         label="Active employees"
       />
-      <KpiTile
+      {/* <KpiTile
         Icon={UserCheck}
         iconBg="bg-sky-100"
         iconText="text-sky-700"
         value={summary.onLeaveToday}
         label="On leave today"
-      />
+      /> */}
     </>
   );
 }

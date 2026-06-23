@@ -15,7 +15,6 @@ import {
   selectEmployeeHistory,
   selectPendingCount,
 } from '../store/slices/leavesSlice';
-import { useConfirmDialog } from './useConfirmDialog';
 
 export interface UseEmployeeDetailOptions {
   employeeId: number | undefined;
@@ -31,7 +30,6 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const [deleting, setDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const navigate = useNavigate();
-  const { confirm } = useConfirmDialog();
 
   const dispatch = useAppDispatch();
   const emp = useAppSelector(selectEmployeeById(employeeId));
@@ -69,21 +67,22 @@ export function useEmployeeDetail(options: UseEmployeeDetailOptions) {
   const handleDelete = useCallback(async () => {
     if (!emp) return;
 
-    const confirmed = await confirm({
-      message: `Delete ${emp.fullName}? This cannot be undone.`,
-    });
-    if (!confirmed) return;
-
     setDeleting(true);
     try {
       await dispatch(deleteEmployee(emp.id)).unwrap();
       setDeleteSuccess(true);
-      setTimeout(() => navigate('/employees'), 2000);
+      setTimeout(
+        () =>
+          navigate('/employees', {
+            state: { message: `${emp.fullName} was deleted successfully.` },
+          }),
+        1000,
+      );
     } catch {
       // Error surfaced through slice mutation state
       setDeleting(false);
     }
-  }, [emp, confirm, dispatch, navigate]);
+  }, [emp, dispatch, navigate]);
 
   return {
     // Employee data

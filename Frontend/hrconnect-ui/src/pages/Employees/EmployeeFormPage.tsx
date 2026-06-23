@@ -106,7 +106,13 @@ const schema = z.object({
       (value) => value.toLowerCase().endsWith('@apexon.com'),
       'Email must end with @apexon.com',
     ),
-  department: z.enum(['IT', 'QE', 'Sales', 'HR']),
+  department: z
+    .string()
+    .min(1, 'Department is required')
+    .refine(
+      (value) => DEPARTMENTS.includes(value as Department),
+      'Select a valid department',
+    ),
   designation: z
     .string()
     .min(1, 'Designation is required')
@@ -158,9 +164,9 @@ export default function EmployeeFormPage({ mode }: Props) {
       firstName: '',
       lastName: '',
       email: '',
-      department: 'IT',
+      department: '',
       designation: '',
-      joiningDate: today(),
+      joiningDate: '',
       isActive: true,
     },
   });
@@ -175,7 +181,7 @@ export default function EmployeeFormPage({ mode }: Props) {
         email: existing.email,
         department: existing.department,
         designation: existing.designation,
-        joiningDate: existing.joiningDate.slice(0, 10),
+        joiningDate: existing.joiningDate ? existing.joiningDate.slice(0, 10) : '',
         isActive: existing.isActive ?? true,
       });
     }
@@ -192,9 +198,13 @@ export default function EmployeeFormPage({ mode }: Props) {
     setSubmitError(null);
     try {
       const fullName = `${values.firstName} ${values.lastName}`.trim().replace(/\s+/g, ' ');
+      const payloadValues = {
+        ...values,
+        department: values.department as Department,
+      };
       const payload = isEdit
-        ? { ...values, email: existing?.email ?? values.email, fullName }
-        : { ...values, fullName };
+        ? { ...payloadValues, email: existing?.email ?? values.email, fullName }
+        : { ...payloadValues, fullName };
 
       if (editId) {
         await dispatch(updateEmployee({ id: editId, values: payload })).unwrap();
@@ -343,7 +353,9 @@ export default function EmployeeFormPage({ mode }: Props) {
                 <div className="relative">
                   <select
                     id="department"
+                    required
                     aria-invalid={Boolean(errors.department)}
+                    aria-describedby={errors.department ? 'department-error' : undefined}
                     className={`w-full appearance-none px-3 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.department
                       ? 'border-rose-400'
                       : 'border-slate-300'
@@ -362,6 +374,11 @@ export default function EmployeeFormPage({ mode }: Props) {
                     aria-hidden="true"
                   />
                 </div>
+                {errors.department && (
+                  <p id="department-error" className="text-xs text-rose-600 mt-1">
+                    {errors.department.message}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -373,6 +390,7 @@ export default function EmployeeFormPage({ mode }: Props) {
                 <div className="relative">
                   <select
                     id="designation"
+                    required
                     aria-invalid={Boolean(errors.designation)}
                     aria-describedby={errors.designation ? 'designation-error' : undefined}
                     className={`w-full appearance-none px-3 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.designation
@@ -402,6 +420,8 @@ export default function EmployeeFormPage({ mode }: Props) {
               <TextField
                 id="joiningDate"
                 type="date"
+                required
+                placeholder="Select joining date"
                 max={today()}
                 label={
                   <>Joining date <span className="text-rose-600">*</span></>
