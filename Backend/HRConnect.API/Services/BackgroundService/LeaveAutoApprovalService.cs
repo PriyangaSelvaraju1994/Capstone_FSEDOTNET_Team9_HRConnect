@@ -62,20 +62,20 @@ public class LeaveAutoApprovalService : BackgroundService
         if (pendingLeaves.Any())
         {
             await context.SaveChangesAsync(stoppingToken);
-            // foreach (var leave in pendingLeaves)
-            // {
-            //     var user = await context.Employees
-            //     .Include(e => e.User)
-            //     .FirstOrDefaultAsync(e => e.Id == leave.EmployeeId);
+            foreach (var leave in pendingLeaves)
+            {
+                var user = await context.Employees
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == leave.EmployeeId);
 
-            //     if (!string.IsNullOrWhiteSpace(user?.User?.Email))
-            //     {
-            //         await emailService.SendEmailAsync(
-            //             user.User.Email,
-            //             "Leave Auto-Approved",
-            //             $"Hi {user.User.FullName},</br>Your leave request from {leave.StartDate} to {leave.EndDate} has been auto-approved due to lack of response from approver.</br>Best regards,</br>HRConnect Team");
-            //     }
-            // }
+                if (!string.IsNullOrWhiteSpace(user?.User?.Email))
+                {
+                    await emailService.SendEmailAsync(
+                        user.User.Email,
+                        "Leave Auto-Approved",
+                        $"Hi {user.User.FullName},</br>Your leave request from {leave.StartDate} to {leave.EndDate} has been auto-approved due to lack of response from approver.</br>Best regards,</br>HRConnect Team");
+                }
+            }
             _logger.LogInformation(
                 "{Count} leaves auto-approved",
                 pendingLeaves.Count);
