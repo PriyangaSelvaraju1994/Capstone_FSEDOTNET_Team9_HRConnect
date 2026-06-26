@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "HRConnect API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Test User\",\n  \"email\": \"user_220d89@test.com\",\n  \"password\": \"Test@1234\",\n  \"department\": \"QA\",\n  \"designation\": \"Tester\",\n  \"dateOfJoining\": \"2025-01-01T00:00:00\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response exists', function () { pm.expect(pm.response.text()).to.not.be.empty; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@test.com\",\n  \"password\": \"Test@1234\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.environment.set('token', pm.response.json().token || '');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employee - Get All",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/employees",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "employees"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leave - Apply",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": \"Vacation\",\n  \"startDate\": \"2025-07-01T00:00:00\",\n  \"endDate\": \"2025-07-02T00:00:00\",\n  \"reason\": \"Testing leave\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/leaves",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "leaves"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
